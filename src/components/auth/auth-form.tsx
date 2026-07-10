@@ -51,7 +51,7 @@ export function AuthForm({ mode }: Props) {
       setSubmitting(false);
       return;
     }
-    router.push(isSignup ? '/dashboard/onboarding' : '/dashboard');
+    router.push(isSignup ? '/onboarding' : '/dashboard');
   };
 
   const inputClass =

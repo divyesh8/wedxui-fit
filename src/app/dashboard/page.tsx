@@ -110,7 +110,7 @@ export default function DashboardPage() {
       {mounted && !onboardedAt && (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}>
           <Link
-            href="/dashboard/onboarding"
+            href="/onboarding"
             className="flex items-center justify-between gap-4 p-5 rounded-2xl border border-wed-purple/40 bg-wed-purple/10 hover:bg-wed-purple/15 transition-all group"
           >
             <div className="flex items-center gap-4">
@@ -174,7 +174,7 @@ export default function DashboardPage() {
               {planWorkouts.length === 0 ? (
                 <p className="text-sm text-wed-gray-400 py-8 text-center">
                   No plan yet — complete your{' '}
-                  <Link href="/dashboard/onboarding" className="text-wed-purple font-semibold">
+                  <Link href="/onboarding" className="text-wed-purple font-semibold">
                     assessment
                   </Link>{' '}
                   to generate your weekly protocol.

@@ -113,7 +113,7 @@ export default function ProgressPage() {
       {/* Not onboarded yet */}
       {!onboardedAt && (
         <Link
-          href="/dashboard/onboarding"
+          href="/onboarding"
           className="flex items-center gap-3 p-5 rounded-2xl border border-wed-purple/40 bg-wed-purple/10 hover:bg-wed-purple/15 transition-all"
         >
           <Sparkles className="w-5 h-5 text-wed-purple" />
