@@ -1,21 +1,52 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Filter, Info, X, Dumbbell, AlertTriangle, Lightbulb } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
-import { exercises, exerciseCategories, difficultyLabels, equipmentLabels } from '@/data/exercises';
+import { Search, Info, X, AlertTriangle, Lightbulb, Sparkles } from 'lucide-react';
+import { exercises, exerciseCategories, difficultyLabels } from '@/data/exercises';
 import { Exercise } from '@/types';
+import { isExerciseAvailable } from '@/lib/plan-generator';
+import { useProfileStore } from '@/store/profile';
+
+// Training-style groupings by required equipment.
+const styleFilters = [
+  { value: 'all', label: 'All Styles' },
+  { value: 'gym', label: 'Gym' },
+  { value: 'home', label: 'Home' },
+  { value: 'calisthenics', label: 'Calisthenics' },
+];
+
+function matchesStyle(ex: Exercise, style: string): boolean {
+  switch (style) {
+    case 'gym':
+      return ex.equipment.some((e) => ['FULL_GYM', 'BARBELL', 'CABLE_MACHINE'].includes(e));
+    case 'home':
+      return ex.equipment.some((e) => ['NONE', 'DUMBBELLS', 'RESISTANCE_BANDS', 'KETTLEBELL', 'PULLUP_BAR'].includes(e));
+    case 'calisthenics':
+      return ex.equipment.includes('NONE') || ex.equipment.includes('PULLUP_BAR');
+    default:
+      return true;
+  }
+}
 
 export default function ExercisesPage() {
+  const { profile, onboardedAt } = useProfileStore();
   const [filter, setFilter] = useState('all');
+  const [style, setStyle] = useState('all');
+  const [forYou, setForYou] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  const hasProfile = mounted && !!onboardedAt && !!profile;
 
   const filtered = exercises.filter((ex) => {
     const matchesFilter = filter === 'all' || ex.primaryMuscles.some((m) => m.toLowerCase() === filter);
     const matchesSearch = ex.name.toLowerCase().includes(search.toLowerCase());
-    return matchesFilter && matchesSearch;
+    const matchesPreference =
+      !hasProfile || !forYou || !profile || isExerciseAvailable(ex, profile.equipment as string[], profile.goal);
+    return matchesFilter && matchesStyle(ex, style) && matchesSearch && matchesPreference;
   });
 
   return (
@@ -51,6 +82,40 @@ export default function ExercisesPage() {
           ))}
         </div>
       </motion.div>
+
+      {/* Training style + personal preference */}
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="flex flex-wrap items-center gap-2">
+        {styleFilters.map((s) => (
+          <button
+            key={s.value}
+            onClick={() => setStyle(s.value)}
+            className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+              style === s.value ? 'bg-wed-blue text-wed-black' : 'bg-white/5 text-wed-gray-300 hover:bg-white/10 border border-white/10'
+            }`}
+          >
+            {s.label}
+          </button>
+        ))}
+        {hasProfile && (
+          <button
+            onClick={() => setForYou((v) => !v)}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+              forYou
+                ? 'bg-wed-lime/20 text-wed-lime border border-wed-lime/40'
+                : 'bg-white/5 text-wed-gray-300 hover:bg-white/10 border border-white/10'
+            }`}
+            title="Only exercises that match your equipment and goal"
+          >
+            <Sparkles className="w-3.5 h-3.5" /> For You
+          </button>
+        )}
+      </motion.div>
+
+      {filtered.length === 0 && (
+        <p className="text-sm text-wed-gray-400 py-10 text-center">
+          Nothing matches these filters — try turning off &quot;For You&quot; or picking another style.
+        </p>
+      )}
 
       {/* Grid */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">

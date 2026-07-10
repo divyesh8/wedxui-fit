@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import CountUp from 'react-countup';
 import { ArrowRight, Sparkles } from 'lucide-react';
@@ -13,13 +14,8 @@ export function HeroSection() {
     setIsVisible(true);
   }, []);
 
-  const scrollToOnboarding = () => {
-    const el = document.getElementById('onboarding');
-    if (el) el.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  const scrollToWorkouts = () => {
-    const el = document.getElementById('workouts');
+  const scrollToCoach = () => {
+    const el = document.getElementById('ai-coach');
     if (el) el.scrollIntoView({ behavior: 'smooth' });
   };
 
@@ -75,18 +71,18 @@ export function HeroSection() {
           transition={{ duration: 0.6, delay: 0.7 }}
           className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16"
         >
-          <button
-            onClick={scrollToOnboarding}
+          <Link
+            href="/signup"
             className="group px-8 py-4 rounded-full bg-gradient-purple text-white font-bold text-lg hover:brightness-110 transition-all btn-glow flex items-center gap-2"
           >
             Start My Journey
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-          </button>
+          </Link>
           <button
-            onClick={scrollToWorkouts}
+            onClick={scrollToCoach}
             className="px-8 py-4 rounded-full border border-white/20 text-white font-semibold hover:bg-white/5 transition-all"
           >
-            Explore Workouts
+            Explore More
           </button>
         </motion.div>
 
@@ -99,21 +95,21 @@ export function HeroSection() {
         >
           <div className="text-center">
             <div className="text-3xl md:text-4xl font-black text-white">
-              <CountUp end={500} suffix="+" duration={2.5} />
+              <CountUp end={40} suffix="+" duration={2.5} />
             </div>
             <div className="text-sm text-wed-gray-400 mt-1">Exercises</div>
           </div>
           <div className="text-center">
             <div className="text-3xl md:text-4xl font-black text-white">
-              <CountUp end={50} suffix="K+" duration={2.5} />
+              <CountUp end={15} suffix="+" duration={2.5} />
             </div>
-            <div className="text-sm text-wed-gray-400 mt-1">Warriors</div>
+            <div className="text-sm text-wed-gray-400 mt-1">Fitness Tools</div>
           </div>
           <div className="text-center">
             <div className="text-3xl md:text-4xl font-black text-white">
-              <CountUp end={12} suffix="M+" duration={2.5} />
+              <CountUp end={30} suffix="+" duration={2.5} />
             </div>
-            <div className="text-sm text-wed-gray-400 mt-1">Reps Logged</div>
+            <div className="text-sm text-wed-gray-400 mt-1">Anime Legends</div>
           </div>
         </motion.div>
       </div>

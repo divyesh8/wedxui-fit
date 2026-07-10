@@ -69,13 +69,20 @@ function exercisesPerDay(sessionMinutes: number): number {
   return 6;
 }
 
+/**
+ * Whether an exercise can be performed with the given equipment.
+ * A CALISTHENICS goal restricts to bodyweight and pull-up bar movements.
+ * Shared by plan generation and the exercise library's "For You" filter.
+ */
+export function isExerciseAvailable(ex: Exercise, equipment: string[], goal?: OnboardingProfile['goal']): boolean {
+  if (goal === 'CALISTHENICS') {
+    return ex.equipment.includes('NONE') || (ex.equipment.includes('PULLUP_BAR') && equipment.includes('PULLUP_BAR'));
+  }
+  return ex.equipment.includes('NONE') || ex.equipment.some((e) => equipment.includes(e));
+}
+
 function availableTo(profile: OnboardingProfile) {
-  return (ex: Exercise): boolean => {
-    if (profile.goal === 'CALISTHENICS') {
-      return ex.equipment.includes('NONE') || (ex.equipment.includes('PULLUP_BAR') && profile.equipment.includes('PULLUP_BAR'));
-    }
-    return ex.equipment.includes('NONE') || ex.equipment.some((e) => (profile.equipment as string[]).includes(e));
-  };
+  return (ex: Exercise): boolean => isExerciseAvailable(ex, profile.equipment as string[], profile.goal);
 }
 
 /** Sort candidates so difficulty closest to the user's experience comes first (stable). */

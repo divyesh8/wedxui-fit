@@ -37,6 +37,13 @@
   }
   html {
     scroll-behavior: smooth;
+    /* Native form controls (select dropdowns, date pickers) render dark
+       instead of white-on-white. */
+    color-scheme: dark;
+  }
+  select option {
+    background-color: #101018;
+    color: #fff;
   }
   ::selection {
     background: rgba(176, 38, 255, 0.3);

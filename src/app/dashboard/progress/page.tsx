@@ -1,40 +1,15 @@
 'use client';
 
-import { useState, useRef } from 'react';
-import { motion, useInView } from 'framer-motion';
-import { TrendingUp, Activity, Award, Flame, Calendar, Camera, Weight, Ruler, Zap, Trophy, TrendingDown, TrendingDownIcon } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { motion } from 'framer-motion';
+import { Activity, Flame, Weight, Plus, Trash2, LineChart, Sparkles } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
-import { Button } from '@/components/ui/button';
+import { useProfileStore } from '@/store/profile';
+import { useProgressStore, type ProgressEntry } from '@/store/progress';
+import { formatDate } from '@/lib/utils';
 
-const weightData = [72, 71.5, 71.2, 70.8, 70.5, 70.2, 69.8, 69.5, 69.3, 69.0, 68.8, 68.5];
-const bodyFatData = [18, 17.5, 17.2, 16.8, 16.5, 16.2, 15.8, 15.5, 15.3, 15.0, 14.8, 14.5];
-const muscleData = [35, 35.2, 35.5, 35.8, 36.0, 36.3, 36.5, 36.8, 37.0, 37.2, 37.5, 37.8];
-
-const measurements = [
-  { label: 'Chest', value: 102, unit: 'cm', change: +2 },
-  { label: 'Waist', value: 78, unit: 'cm', change: -4 },
-  { label: 'Arms', value: 36, unit: 'cm', change: +1.5 },
-  { label: 'Thighs', value: 58, unit: 'cm', change: +2 },
-];
-
-const prs = [
-  { exercise: 'Bench Press', value: 100, unit: 'kg', date: '2 weeks ago', prev: 92.5 },
-  { exercise: 'Squat', value: 140, unit: 'kg', date: '1 month ago', prev: 130 },
-  { exercise: 'Deadlift', value: 180, unit: 'kg', date: '3 weeks ago', prev: 170 },
-  { exercise: 'Overhead Press', value: 65, unit: 'kg', date: '2 days ago', prev: 60 },
-];
-
-const achievements = [
-  { name: 'First Blood', icon: '🩸', desc: 'Complete your first workout', unlocked: '1 month ago' },
-  { name: 'Week Warrior', icon: '🔥', desc: '7-day streak', unlocked: '2 weeks ago' },
-  { name: 'Iron Will', icon: '⚔️', desc: '30-day streak', unlocked: '3 days ago' },
-  { name: 'Century Club', icon: '💯', desc: '100 workouts completed', unlocked: '1 week ago' },
-  { name: 'PR Breaker', icon: '🏆', desc: 'Set 10 personal records', unlocked: '2 days ago' },
-  { name: 'Early Bird', icon: '🌅', desc: '5 AM workout club', unlocked: '5 days ago' },
-];
-
-function SimpleBarChart({ data, color, label }: { data: number[]; color: string; label: string }) {
+function TrendChart({ data, color }: { data: number[]; color: string }) {
   const max = Math.max(...data);
   const min = Math.min(...data);
   const range = max - min || 1;
@@ -44,9 +19,9 @@ function SimpleBarChart({ data, color, label }: { data: number[]; color: string;
         <div key={i} className="flex-1 flex flex-col items-center gap-1">
           <div
             className={`w-full rounded-t-sm transition-all hover:opacity-80 ${color}`}
-            style={{ height: `${((val - min) / range) * 100}%`, minHeight: '10%' }}
+            style={{ height: `${Math.max(((val - min) / range) * 100, 8)}%` }}
+            title={String(val)}
           />
-          {i % 3 === 0 && <span className="text-[10px] text-wed-gray-500">{i + 1}</span>}
         </div>
       ))}
     </div>
@@ -54,43 +29,104 @@ function SimpleBarChart({ data, color, label }: { data: number[]; color: string;
 }
 
 export default function ProgressPage() {
-  const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: '-100px' });
-  const [timeRange, setTimeRange] = useState('3m');
+  const { profile, onboardedAt } = useProfileStore();
+  const { entries, addEntry, removeEntry } = useProgressStore();
+
+  const [mounted, setMounted] = useState(false);
+  const [weight, setWeight] = useState('');
+  const [bodyFat, setBodyFat] = useState('');
+  const [formError, setFormError] = useState<string | null>(null);
+
+  useEffect(() => setMounted(true), []);
+  if (!mounted) return null;
+
+  // The onboarding measurement is the first real data point.
+  const baseline: ProgressEntry[] =
+    onboardedAt && profile?.weightKg
+      ? [{ id: 'baseline', date: onboardedAt, weightKg: profile.weightKg, bodyFatPct: profile.bodyFatPct ?? null }]
+      : [];
+  const allEntries = [...baseline, ...entries];
+
+  const weightSeries = allEntries.map((e) => e.weightKg);
+  const bodyFatSeries = allEntries.filter((e) => e.bodyFatPct != null).map((e) => e.bodyFatPct as number);
+
+  const current = allEntries[allEntries.length - 1];
+  const first = allEntries[0];
+  const weightChange = current && first ? current.weightKg - first.weightKg : 0;
+
+  const submitEntry = (e: React.FormEvent) => {
+    e.preventDefault();
+    const w = parseFloat(weight);
+    const bf = bodyFat === '' ? null : parseFloat(bodyFat);
+    if (Number.isNaN(w) || w < 30 || w > 300) {
+      setFormError('Enter a weight between 30 and 300 kg.');
+      return;
+    }
+    if (bf !== null && (Number.isNaN(bf) || bf < 3 || bf > 60)) {
+      setFormError('Body fat must be between 3 and 60%.');
+      return;
+    }
+    addEntry(w, bf);
+    setWeight('');
+    setBodyFat('');
+    setFormError(null);
+  };
+
+  const stats = [
+    {
+      label: 'Current Weight',
+      value: current ? `${current.weightKg}` : '—',
+      unit: current ? 'kg' : '',
+      icon: Weight,
+      color: 'text-wed-blue',
+    },
+    {
+      label: 'Body Fat',
+      value: current?.bodyFatPct != null ? `${current.bodyFatPct}` : '—',
+      unit: current?.bodyFatPct != null ? '%' : '',
+      icon: Activity,
+      color: 'text-wed-pink',
+    },
+    {
+      label: 'Change Since Start',
+      value: allEntries.length > 1 ? `${weightChange > 0 ? '+' : ''}${weightChange.toFixed(1)}` : '—',
+      unit: allEntries.length > 1 ? 'kg' : '',
+      icon: LineChart,
+      color: 'text-wed-lime',
+    },
+    {
+      label: 'Entries Logged',
+      value: `${allEntries.length}`,
+      unit: '',
+      icon: Flame,
+      color: 'text-wed-purple',
+    },
+  ];
 
   return (
-    <div className="space-y-6" ref={ref}>
+    <div className="space-y-6">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h2 className="text-2xl font-bold text-white mb-1">Progress Tracking</h2>
-            <p className="text-wed-gray-400">Watch your transformation with data and charts.</p>
-          </div>
-          <div className="flex gap-2">
-            {['1m', '3m', '6m', '1y'].map((r) => (
-              <button
-                key={r}
-                onClick={() => setTimeRange(r)}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                  timeRange === r ? 'bg-wed-purple text-white' : 'bg-white/5 text-wed-gray-400 hover:bg-white/10'
-                }`}
-              >
-                {r}
-              </button>
-            ))}
-          </div>
-        </div>
+        <h2 className="text-2xl font-bold text-white mb-1">Progress Tracking</h2>
+        <p className="text-wed-gray-400">Your real numbers — log check-ins and watch the trend build.</p>
       </motion.div>
+
+      {/* Not onboarded yet */}
+      {!onboardedAt && (
+        <Link
+          href="/dashboard/onboarding"
+          className="flex items-center gap-3 p-5 rounded-2xl border border-wed-purple/40 bg-wed-purple/10 hover:bg-wed-purple/15 transition-all"
+        >
+          <Sparkles className="w-5 h-5 text-wed-purple" />
+          <p className="text-sm text-white">
+            Complete your assessment first — your starting weight becomes the first point on these charts.
+          </p>
+        </Link>
+      )}
 
       {/* Stats Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { label: 'Current Weight', value: '68.5', unit: 'kg', change: '-3.5', icon: Weight, color: 'text-wed-blue' },
-          { label: 'Body Fat', value: '14.5', unit: '%', change: '-3.5', icon: Activity, color: 'text-wed-pink' },
-          { label: 'Muscle Mass', value: '37.8', unit: 'kg', change: '+2.8', icon: Zap, color: 'text-wed-lime' },
-          { label: 'Workout Streak', value: '12', unit: 'days', change: '+12', icon: Flame, color: 'text-wed-purple' },
-        ].map((stat, i) => (
-          <motion.div key={stat.label} initial={{ opacity: 0, y: 20 }} animate={isInView ? { opacity: 1, y: 0 } : {}} transition={{ delay: i * 0.1 }}>
+        {stats.map((stat, i) => (
+          <motion.div key={stat.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}>
             <Card>
               <CardContent className="p-5">
                 <div className="flex items-center gap-2 mb-2">
@@ -98,10 +134,8 @@ export default function ProgressPage() {
                   <span className="text-xs text-wed-gray-400">{stat.label}</span>
                 </div>
                 <div className="text-2xl font-black text-white">
-                  {stat.value}<span className="text-sm font-normal text-wed-gray-400 ml-1">{stat.unit}</span>
-                </div>
-                <div className={`text-xs font-medium mt-1 ${stat.change.startsWith('-') ? 'text-wed-pink' : 'text-wed-lime'}`}>
-                  {stat.change.startsWith('-') ? '' : '+'}{stat.change} since start
+                  {stat.value}
+                  <span className="text-sm font-normal text-wed-gray-400 ml-1">{stat.unit}</span>
                 </div>
               </CardContent>
             </Card>
@@ -109,26 +143,72 @@ export default function ProgressPage() {
         ))}
       </div>
 
+      {/* Log a check-in */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Plus className="w-4 h-4 text-wed-lime" /> Log a Check-In
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={submitEntry} className="flex flex-col sm:flex-row gap-3">
+              <input
+                type="number"
+                step="0.1"
+                value={weight}
+                onChange={(e) => setWeight(e.target.value)}
+                placeholder="Weight (kg)"
+                className="flex-1 h-11 px-4 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-wed-gray-500 focus:border-wed-purple focus:outline-none"
+              />
+              <input
+                type="number"
+                step="0.1"
+                value={bodyFat}
+                onChange={(e) => setBodyFat(e.target.value)}
+                placeholder="Body fat % (optional)"
+                className="flex-1 h-11 px-4 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-wed-gray-500 focus:border-wed-purple focus:outline-none"
+              />
+              <button
+                type="submit"
+                className="h-11 px-6 rounded-xl bg-wed-purple text-white font-semibold hover:brightness-110 transition-all"
+              >
+                Log Entry
+              </button>
+            </form>
+            {formError && <p className="text-xs text-red-400 mt-2">{formError}</p>}
+          </CardContent>
+        </Card>
+      </motion.div>
+
       {/* Charts */}
-      <div className="grid lg:grid-cols-3 gap-4">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={isInView ? { opacity: 1, y: 0 } : {}} transition={{ delay: 0.3 }}>
+      <div className="grid lg:grid-cols-2 gap-4">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
-                <TrendingDown className="w-4 h-4 text-wed-blue" /> Weight Trend
+                <Weight className="w-4 h-4 text-wed-blue" /> Weight Trend
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <SimpleBarChart data={weightData} color="bg-wed-blue/50" label="Weight" />
-              <div className="flex justify-between text-xs text-wed-gray-500 mt-2">
-                <span>Start: 72kg</span>
-                <span>Current: 68.5kg</span>
-              </div>
+              {weightSeries.length >= 2 ? (
+                <>
+                  <TrendChart data={weightSeries} color="bg-wed-blue/50" />
+                  <div className="flex justify-between text-xs text-wed-gray-500 mt-2">
+                    <span>Start: {first?.weightKg}kg</span>
+                    <span>Current: {current?.weightKg}kg</span>
+                  </div>
+                </>
+              ) : (
+                <p className="text-sm text-wed-gray-400 py-10 text-center">
+                  Log at least two check-ins to see your weight trend.
+                </p>
+              )}
             </CardContent>
           </Card>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={isInView ? { opacity: 1, y: 0 } : {}} transition={{ delay: 0.4 }}>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
@@ -136,109 +216,66 @@ export default function ProgressPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <SimpleBarChart data={bodyFatData} color="bg-wed-pink/50" label="Body Fat" />
-              <div className="flex justify-between text-xs text-wed-gray-500 mt-2">
-                <span>Start: 18%</span>
-                <span>Current: 14.5%</span>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={isInView ? { opacity: 1, y: 0 } : {}} transition={{ delay: 0.5 }}>
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Zap className="w-4 h-4 text-wed-lime" /> Muscle Mass
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <SimpleBarChart data={muscleData} color="bg-wed-lime/50" label="Muscle" />
-              <div className="flex justify-between text-xs text-wed-gray-500 mt-2">
-                <span>Start: 35kg</span>
-                <span>Current: 37.8kg</span>
-              </div>
+              {bodyFatSeries.length >= 2 ? (
+                <>
+                  <TrendChart data={bodyFatSeries} color="bg-wed-pink/50" />
+                  <div className="flex justify-between text-xs text-wed-gray-500 mt-2">
+                    <span>Start: {bodyFatSeries[0]}%</span>
+                    <span>Current: {bodyFatSeries[bodyFatSeries.length - 1]}%</span>
+                  </div>
+                </>
+              ) : (
+                <p className="text-sm text-wed-gray-400 py-10 text-center">
+                  Include body fat % in your check-ins to track it here.
+                </p>
+              )}
             </CardContent>
           </Card>
         </motion.div>
       </div>
 
-      {/* Measurements & PRs */}
-      <div className="grid lg:grid-cols-2 gap-4">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={isInView ? { opacity: 1, y: 0 } : {}} transition={{ delay: 0.6 }}>
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Ruler className="w-4 h-4 text-wed-purple" /> Measurements
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {measurements.map((m) => (
-                <div key={m.label} className="flex items-center justify-between p-3 rounded-xl bg-white/5">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-wed-purple/10 flex items-center justify-center">
-                      <Ruler className="w-4 h-4 text-wed-purple" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-white">{m.label}</p>
-                      <p className="text-xs text-wed-gray-400">{m.value}{m.unit}</p>
-                    </div>
-                  </div>
-                  <span className={`text-xs font-semibold px-2 py-1 rounded-full ${m.change > 0 ? 'bg-wed-lime/10 text-wed-lime' : 'bg-wed-pink/10 text-wed-pink'}`}>
-                    {m.change > 0 ? '+' : ''}{m.change}{m.unit}
-                  </span>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={isInView ? { opacity: 1, y: 0 } : {}} transition={{ delay: 0.7 }}>
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Trophy className="w-4 h-4 text-wed-orange" /> Personal Records
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {prs.map((pr) => (
-                <div key={pr.exercise} className="flex items-center justify-between p-3 rounded-xl bg-white/5">
-                  <div>
-                    <p className="text-sm font-semibold text-white">{pr.exercise}</p>
-                    <p className="text-xs text-wed-gray-400">{pr.date}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-lg font-bold text-white">{pr.value}<span className="text-sm font-normal text-wed-gray-400 ml-1">{pr.unit}</span></p>
-                    <p className="text-xs text-wed-lime">+{pr.value - pr.prev}{pr.unit} from {pr.prev}</p>
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </motion.div>
-      </div>
-
-      {/* Achievements */}
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={isInView ? { opacity: 1, y: 0 } : {}} transition={{ delay: 0.8 }}>
+      {/* Entry history */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
-              <Award className="w-4 h-4 text-wed-lime" /> Achievements
+              <LineChart className="w-4 h-4 text-wed-purple" /> Check-In History
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {achievements.map((ach) => (
-                <div key={ach.name} className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5 hover:border-wed-purple/20 transition-all">
-                  <span className="text-2xl">{ach.icon}</span>
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-white">{ach.name}</p>
-                    <p className="text-xs text-wed-gray-400">{ach.desc}</p>
+            {allEntries.length === 0 ? (
+              <p className="text-sm text-wed-gray-400 py-6 text-center">
+                No check-ins yet. Log your first one above — future you will thank you.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {[...allEntries].reverse().map((entry) => (
+                  <div key={entry.id} className="flex items-center justify-between p-3 rounded-xl bg-white/5">
+                    <div>
+                      <p className="text-sm font-semibold text-white">
+                        {entry.weightKg} kg
+                        {entry.bodyFatPct != null && (
+                          <span className="text-wed-gray-400 font-normal"> · {entry.bodyFatPct}% bf</span>
+                        )}
+                        {entry.id === 'baseline' && (
+                          <span className="ml-2 text-[10px] uppercase tracking-wide text-wed-purple">assessment</span>
+                        )}
+                      </p>
+                      <p className="text-xs text-wed-gray-500">{formatDate(entry.date)}</p>
+                    </div>
+                    {entry.id !== 'baseline' && (
+                      <button
+                        onClick={() => removeEntry(entry.id)}
+                        className="p-2 rounded-lg text-wed-gray-500 hover:text-red-400 hover:bg-red-500/5 transition-all"
+                        aria-label="Delete entry"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
-                  <span className="text-xs text-wed-gray-500">{ach.unlocked}</span>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </motion.div>

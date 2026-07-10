@@ -1,17 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X } from 'lucide-react';
 
 const navLinks = [
   { href: '#hero', label: 'Home' },
   { href: '#ai-coach', label: 'AI Coach' },
-  { href: '#workouts', label: 'Workouts' },
-  { href: '#exercises', label: 'Exercises' },
-  { href: '#challenges', label: 'Challenges' },
-  { href: '#tools', label: 'Tools' },
-  { href: '#progress', label: 'Progress' },
+  { href: '#motivation', label: 'Motivation' },
 ];
 
 export function SiteNav() {
@@ -81,13 +78,18 @@ export function SiteNav() {
         </ul>
 
         <div className="hidden lg:flex items-center gap-3">
-          <a
-            href="#onboarding"
-            onClick={(e) => { e.preventDefault(); scrollTo('#onboarding'); }}
+          <Link
+            href="/login"
+            className="px-4 py-2.5 rounded-full text-sm font-medium text-wed-gray-200 hover:text-white hover:bg-white/5 transition-all"
+          >
+            Login
+          </Link>
+          <Link
+            href="/signup"
             className="px-5 py-2.5 rounded-full bg-gradient-purple text-white text-sm font-semibold hover:brightness-110 transition-all btn-glow"
           >
             Start Journey
-          </a>
+          </Link>
         </div>
 
         {/* Mobile toggle */}
@@ -125,14 +127,19 @@ export function SiteNav() {
                   </a>
                 </li>
               ))}
-              <li className="pt-2 px-4">
-                <a
-                  href="#onboarding"
-                  onClick={(e) => { e.preventDefault(); scrollTo('#onboarding'); }}
+              <li className="pt-2 px-4 space-y-2">
+                <Link
+                  href="/login"
+                  className="block w-full text-center px-5 py-3 rounded-full border border-white/15 text-white text-sm font-medium"
+                >
+                  Login
+                </Link>
+                <Link
+                  href="/signup"
                   className="block w-full text-center px-5 py-3 rounded-full bg-gradient-purple text-white text-sm font-semibold"
                 >
                   Start Journey
-                </a>
+                </Link>
               </li>
             </ul>
           </motion.div>

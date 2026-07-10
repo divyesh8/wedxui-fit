@@ -11,10 +11,35 @@ interface User {
   role: string;
 }
 
+/**
+ * Client-side account stored in localStorage — the stopgap until the
+ * database/Auth.js phase. One account per browser; password is stored
+ * as a SHA-256 hash (demo-grade, NOT production auth).
+ */
+interface StoredAccount {
+  id: string;
+  name: string;
+  email: string;
+  passwordHash: string;
+}
+
+async function sha256(text: string): Promise<string> {
+  const data = new TextEncoder().encode(text);
+  const digest = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
 interface AuthState {
   user: User | null;
+  account: StoredAccount | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  /** Returns an error message, or null on success. */
+  register: (name: string, email: string, password: string) => Promise<string | null>;
+  /** Returns an error message, or null on success. */
+  login: (email: string, password: string) => Promise<string | null>;
   setUser: (user: User | null) => void;
   setLoading: (loading: boolean) => void;
   logout: () => void;
@@ -22,12 +47,49 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
+      account: null,
       isAuthenticated: false,
       isLoading: true,
+
+      register: async (name, email, password) => {
+        const normalized = email.trim().toLowerCase();
+        const existing = get().account;
+        if (existing && existing.email === normalized) {
+          return 'An account with this email already exists — log in instead.';
+        }
+        const account: StoredAccount = {
+          id: crypto.randomUUID(),
+          name: name.trim(),
+          email: normalized,
+          passwordHash: await sha256(password),
+        };
+        set({
+          account,
+          user: { id: account.id, name: account.name, email: account.email, image: null, role: 'USER' },
+          isAuthenticated: true,
+          isLoading: false,
+        });
+        return null;
+      },
+
+      login: async (email, password) => {
+        const account = get().account;
+        if (!account) return 'No account found on this device — create one first.';
+        if (account.email !== email.trim().toLowerCase()) return 'No account found with this email.';
+        if (account.passwordHash !== (await sha256(password))) return 'Incorrect password.';
+        set({
+          user: { id: account.id, name: account.name, email: account.email, image: null, role: 'USER' },
+          isAuthenticated: true,
+          isLoading: false,
+        });
+        return null;
+      },
+
       setUser: (user) => set({ user, isAuthenticated: !!user, isLoading: false }),
       setLoading: (loading) => set({ isLoading: loading }),
+      // Keeps the account so the user can log back in.
       logout: () => set({ user: null, isAuthenticated: false, isLoading: false }),
     }),
     { name: 'wedxui-auth' }
