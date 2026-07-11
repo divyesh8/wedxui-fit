@@ -46,7 +46,15 @@ export async function POST(req: Request) {
   await prisma.otpVerification.create({
     data: { userId: user.id, purpose: 'EMAIL_VERIFICATION', codeHash: await hashOtp(code), expiresAt: otpExpiry() },
   });
-  await sendOtpEmail(email, code, username);
+  try {
+    await sendOtpEmail(email, code, username);
+  } catch (err) {
+    console.error('register: failed to send OTP email', err);
+    return NextResponse.json(
+      { error: 'We could not send the verification email. Please try again shortly or contact support.' },
+      { status: 502 }
+    );
+  }
 
   const body: Record<string, unknown> = { ok: true, email };
   if (process.env.NODE_ENV === 'development') body.devCode = code; // dev-only convenience
