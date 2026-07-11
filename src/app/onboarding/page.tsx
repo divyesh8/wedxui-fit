@@ -14,16 +14,16 @@ import { OnboardingWizard } from '@/components/onboarding/wizard';
  */
 export default function OnboardingPage() {
   const router = useRouter();
-  const { isAuthenticated } = useAuthStore();
-  const [mounted, setMounted] = useState(false);
+  const { status, refresh } = useAuthStore();
   const [stage, setStage] = useState<OnboardingStage>(0);
 
-  useEffect(() => setMounted(true), []);
   useEffect(() => {
-    if (mounted && !isAuthenticated) router.replace('/login');
-  }, [mounted, isAuthenticated, router]);
+    refresh().then((user) => {
+      if (!user) router.replace('/login');
+    });
+  }, [refresh, router]);
 
-  if (!mounted || !isAuthenticated) return null;
+  if (status !== 'authenticated') return null;
 
   return (
     <main className="min-h-screen bg-wed-black noise-bg flex">

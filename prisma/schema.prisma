@@ -6,8 +6,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL") // pooled connection for the app
+  directUrl = env("DIRECT_URL")   // direct connection for migrations (Neon)
 }
 
 // ─── ENUMS ─────────────────────────────────────────────
@@ -96,70 +97,84 @@ enum NotificationType {
   SOCIAL
 }
 
-// ─── USER & AUTH ───────────────────────────────────────
+// ─── USER & AUTH (custom credential auth: bcrypt + OTP + JWT) ───
 
-model Account {
-  id                String  @id @default(cuid())
-  userId            String
-  type              String
-  provider          String
-  providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String? @db.Text
-  session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([provider, providerAccountId])
-  @@map("accounts")
-}
-
-model Session {
-  id           String   @id @default(cuid())
-  sessionToken String   @unique
-  userId       String
-  expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("sessions")
-}
-
-model VerificationToken {
-  identifier String
-  token      String   @unique
-  expires    DateTime
-
-  @@unique([identifier, token])
-  @@map("verification_tokens")
+enum OtpPurpose {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
 }
 
 model User {
   id            String    @id @default(cuid())
+  username      String    @unique
   name          String?
   email         String    @unique
-  emailVerified DateTime?
+  emailVerified DateTime? // set the moment the email OTP is verified
   image         String?
-  password      String?   @db.Text // hashed, for credential auth
+  password      String    @db.Text // bcrypt hash — required for credential auth
   role          String    @default("USER") // USER, ADMIN, COACH
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
   // Relations
-  accounts      Account[]
-  sessions      Session[]
-  profile       UserProfile?
-  workouts      WorkoutLog[]
-  progress      ProgressEntry[]
-  achievements  UserAchievement[]
-  challenges    UserChallenge[]
-  settings      UserSettings?
-  notifications Notification[]
+  sessions       AuthSession[]
+  otpCodes       OtpVerification[]
+  passwordResets PasswordReset[]
+  profile        UserProfile?
+  workouts       WorkoutLog[]
+  progress       ProgressEntry[]
+  achievements   UserAchievement[]
+  challenges     UserChallenge[]
+  settings       UserSettings?
+  notifications  Notification[]
 
   @@map("users")
+}
+
+// Server-side sessions so logout truly revokes access: the httpOnly cookie is
+// cleared AND this row is deleted. Protected API routes verify the JWT signature
+// (edge-safe) and then confirm this session row still exists and is unexpired.
+model AuthSession {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userAgent String?
+  ipAddress String?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("auth_sessions")
+}
+
+// Temporary 6-digit codes — stored ONLY as a bcrypt hash, 5-minute expiry,
+// attempt-limited. A user cannot log in until an EMAIL_VERIFICATION code is
+// consumed (which stamps User.emailVerified).
+model OtpVerification {
+  id         String     @id @default(cuid())
+  userId     String
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  purpose    OtpPurpose @default(EMAIL_VERIFICATION)
+  codeHash   String // bcrypt hash of the 6-digit code
+  expiresAt  DateTime
+  attempts   Int        @default(0)
+  consumedAt DateTime?
+  createdAt  DateTime   @default(now())
+
+  @@index([userId, purpose])
+  @@map("otp_verifications")
+}
+
+model PasswordReset {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@map("password_resets")
 }
 
 // ─── USER PROFILE ──────────────────────────────────────
@@ -170,11 +185,13 @@ model UserProfile {
   user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // Physical
-  age          Int?
-  gender       Gender?
-  heightCm     Float?
-  weightKg     Float?
-  bodyFatPct   Float?
+  age            Int?
+  gender         Gender?
+  heightCm       Float?
+  weightKg       Float?  // current weight
+  targetWeightKg Float?
+  bodyFatPct     Float?
+  waterIntakeMl  Int?
 
   // Fitness
   goal         FitnessGoal?

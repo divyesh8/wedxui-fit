@@ -38,8 +38,8 @@ export function DashboardSidebar({ mobileOpen, setMobileOpen }: { mobileOpen: bo
   const logout = useAuthStore((s) => s.logout);
   const [collapsed, setCollapsed] = useState(false);
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     router.push('/');
   };
 

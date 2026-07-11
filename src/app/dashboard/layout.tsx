@@ -12,18 +12,18 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const { isAuthenticated } = useAuthStore();
+  const { status, refresh } = useAuthStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  // Wait for the persisted auth store to rehydrate before deciding.
-  const [mounted, setMounted] = useState(false);
 
-  useEffect(() => setMounted(true), []);
-
+  // Middleware already gates these routes server-side; this hydrates the user
+  // into the client cache and redirects as a fallback if the session is gone.
   useEffect(() => {
-    if (mounted && !isAuthenticated) router.replace('/login');
-  }, [mounted, isAuthenticated, router]);
+    refresh().then((user) => {
+      if (!user) router.replace('/login');
+    });
+  }, [refresh, router]);
 
-  if (!mounted || !isAuthenticated) return null;
+  if (status !== 'authenticated') return null;
 
   return (
     <div className="min-h-screen bg-wed-black">

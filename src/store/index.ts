@@ -2,99 +2,48 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 // ─── AUTH STORE ────────────────────────────────────────
+// The httpOnly session cookie + AuthSession row in Postgres are the source of
+// truth. This store is only a client cache of the current user, hydrated from
+// /api/auth/me. It is NOT persisted — no auth state lives in localStorage.
 
-interface User {
+export interface SessionUser {
   id: string;
+  username: string;
   name: string | null;
   email: string;
-  image: string | null;
   role: string;
 }
 
-/**
- * Client-side account stored in localStorage — the stopgap until the
- * database/Auth.js phase. One account per browser; password is stored
- * as a SHA-256 hash (demo-grade, NOT production auth).
- */
-interface StoredAccount {
-  id: string;
-  name: string;
-  email: string;
-  passwordHash: string;
-}
-
-async function sha256(text: string): Promise<string> {
-  const data = new TextEncoder().encode(text);
-  const digest = await crypto.subtle.digest('SHA-256', data);
-  return Array.from(new Uint8Array(digest))
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
-}
-
 interface AuthState {
-  user: User | null;
-  account: StoredAccount | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  /** Returns an error message, or null on success. */
-  register: (name: string, email: string, password: string) => Promise<string | null>;
-  /** Returns an error message, or null on success. */
-  login: (email: string, password: string) => Promise<string | null>;
-  setUser: (user: User | null) => void;
-  setLoading: (loading: boolean) => void;
-  logout: () => void;
+  user: SessionUser | null;
+  status: 'loading' | 'authenticated' | 'unauthenticated';
+  setUser: (user: SessionUser | null) => void;
+  /** Re-fetch the current user from the server session. */
+  refresh: () => Promise<SessionUser | null>;
+  logout: () => Promise<void>;
 }
 
-export const useAuthStore = create<AuthState>()(
-  persist(
-    (set, get) => ({
-      user: null,
-      account: null,
-      isAuthenticated: false,
-      isLoading: true,
-
-      register: async (name, email, password) => {
-        const normalized = email.trim().toLowerCase();
-        const existing = get().account;
-        if (existing && existing.email === normalized) {
-          return 'An account with this email already exists — log in instead.';
-        }
-        const account: StoredAccount = {
-          id: crypto.randomUUID(),
-          name: name.trim(),
-          email: normalized,
-          passwordHash: await sha256(password),
-        };
-        set({
-          account,
-          user: { id: account.id, name: account.name, email: account.email, image: null, role: 'USER' },
-          isAuthenticated: true,
-          isLoading: false,
-        });
-        return null;
-      },
-
-      login: async (email, password) => {
-        const account = get().account;
-        if (!account) return 'No account found on this device — create one first.';
-        if (account.email !== email.trim().toLowerCase()) return 'No account found with this email.';
-        if (account.passwordHash !== (await sha256(password))) return 'Incorrect password.';
-        set({
-          user: { id: account.id, name: account.name, email: account.email, image: null, role: 'USER' },
-          isAuthenticated: true,
-          isLoading: false,
-        });
-        return null;
-      },
-
-      setUser: (user) => set({ user, isAuthenticated: !!user, isLoading: false }),
-      setLoading: (loading) => set({ isLoading: loading }),
-      // Keeps the account so the user can log back in.
-      logout: () => set({ user: null, isAuthenticated: false, isLoading: false }),
-    }),
-    { name: 'wedxui-auth' }
-  )
-);
+export const useAuthStore = create<AuthState>((set) => ({
+  user: null,
+  status: 'loading',
+  setUser: (user) => set({ user, status: user ? 'authenticated' : 'unauthenticated' }),
+  refresh: async () => {
+    try {
+      const res = await fetch('/api/auth/me', { cache: 'no-store' });
+      const data = await res.json();
+      const user: SessionUser | null = data.user ?? null;
+      set({ user, status: user ? 'authenticated' : 'unauthenticated' });
+      return user;
+    } catch {
+      set({ user: null, status: 'unauthenticated' });
+      return null;
+    }
+  },
+  logout: async () => {
+    await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+    set({ user: null, status: 'unauthenticated' });
+  },
+}));
 
 // ─── WORKOUT SESSION STORE ─────────────────────────────
 
@@ -109,7 +58,7 @@ interface WorkoutSessionState {
   startTime: number | null;
   exercises: ActiveExercise[];
   currentExerciseIndex: number;
-  
+
   startWorkout: (exercises: ActiveExercise[]) => void;
   addSet: (exerciseIndex: number, reps: number, weight: number) => void;
   completeSet: (exerciseIndex: number, setIndex: number) => void;
@@ -124,35 +73,35 @@ export const useWorkoutSessionStore = create<WorkoutSessionState>()(
       startTime: null,
       exercises: [],
       currentExerciseIndex: 0,
-      
+
       startWorkout: (exercises) => set({
         isActive: true,
         startTime: Date.now(),
         exercises,
         currentExerciseIndex: 0,
       }),
-      
+
       addSet: (exerciseIndex, reps, weight) => {
         const state = get();
         const newExercises = [...state.exercises];
         newExercises[exerciseIndex].sets.push({ reps, weight, completed: false });
         set({ exercises: newExercises });
       },
-      
+
       completeSet: (exerciseIndex, setIndex) => {
         const state = get();
         const newExercises = [...state.exercises];
         newExercises[exerciseIndex].sets[setIndex].completed = true;
         set({ exercises: newExercises });
       },
-      
+
       nextExercise: () => {
         const state = get();
         if (state.currentExerciseIndex < state.exercises.length - 1) {
           set({ currentExerciseIndex: state.currentExerciseIndex + 1 });
         }
       },
-      
+
       endWorkout: () => set({
         isActive: false,
         startTime: null,
@@ -170,7 +119,7 @@ interface UIState {
   sidebarOpen: boolean;
   activeModal: string | null;
   toastQueue: { id: string; message: string; type: 'success' | 'error' | 'info' }[];
-  
+
   toggleSidebar: () => void;
   setSidebarOpen: (open: boolean) => void;
   setActiveModal: (modal: string | null) => void;
@@ -182,17 +131,17 @@ export const useUIStore = create<UIState>((set, get) => ({
   sidebarOpen: false,
   activeModal: null,
   toastQueue: [],
-  
+
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
   setActiveModal: (modal) => set({ activeModal: modal }),
-  
+
   addToast: (message, type) => {
     const id = Math.random().toString(36).substring(7);
     set((state) => ({ toastQueue: [...state.toastQueue, { id, message, type }] }));
     setTimeout(() => get().removeToast(id), 4000);
   },
-  
+
   removeToast: (id) => set((state) => ({
     toastQueue: state.toastQueue.filter((t) => t.id !== id),
   })),
