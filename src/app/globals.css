@@ -24,6 +24,8 @@
     --input: 240 10% 15%;
     --ring: 276 100% 58%;
     --radius: 0.75rem;
+    /* Ripple color for the pricing page's RippleButton (dark theme default). */
+    --button-ripple-color: rgba(255, 255, 255, 0.35);
   }
 }
 

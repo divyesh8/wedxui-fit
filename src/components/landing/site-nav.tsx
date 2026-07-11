@@ -79,6 +79,12 @@ export function SiteNav() {
 
         <div className="hidden lg:flex items-center gap-3">
           <Link
+            href="/pricing"
+            className="px-4 py-2.5 rounded-full text-sm font-medium text-wed-gray-200 hover:text-white hover:bg-white/5 transition-all"
+          >
+            Pricing
+          </Link>
+          <Link
             href="/login"
             className="px-4 py-2.5 rounded-full text-sm font-medium text-wed-gray-200 hover:text-white hover:bg-white/5 transition-all"
           >
