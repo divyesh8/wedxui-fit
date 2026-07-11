@@ -11,17 +11,29 @@ export async function POST(req: Request) {
   if (!rateLimit(`login:${clientIp(req)}`, 10, 60_000)) {
     return NextResponse.json({ error: 'Too many attempts. Please wait a minute.' }, { status: 429 });
   }
+
   const parsed = loginSchema.safeParse(await req.json().catch(() => ({})));
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
+  }
   const { email, password } = parsed.data;
 
   const user = await prisma.user.findUnique({ where: { email } });
   // Same generic error whether the email is unknown or the password is wrong.
-  if (!user) return NextResponse.json({ error: 'Invalid email or password.' }, { status: 401 });
+  if (!user || !user.password) {
+    return NextResponse.json({ error: 'Invalid email or password.' }, { status: 401 });
+  }
+
   const ok = await verifyPassword(password, user.password);
-  if (!ok) return NextResponse.json({ error: 'Invalid email or password.' }, { status: 401 });
+  if (!ok) {
+    return NextResponse.json({ error: 'Invalid email or password.' }, { status: 401 });
+  }
+
   if (!user.emailVerified) {
-    return NextResponse.json({ error: 'Please verify your email first.', needsVerification: true, email }, { status: 403 });
+    return NextResponse.json(
+      { error: 'Please verify your email first.', needsVerification: true, email },
+      { status: 403 }
+    );
   }
 
   await createSession(user.id);
