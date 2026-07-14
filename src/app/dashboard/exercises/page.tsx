@@ -6,7 +6,6 @@ import { Search, Info, X, AlertTriangle, Lightbulb, Sparkles } from 'lucide-reac
 import { exercises, exerciseCategories, difficultyLabels } from '@/data/exercises';
 import { Exercise } from '@/types';
 import { isExerciseAvailable } from '@/lib/plan-generator';
-import { useProfileStore } from '@/store/profile';
 
 // Training-style groupings by required equipment.
 const styleFilters = [
@@ -29,23 +28,37 @@ function matchesStyle(ex: Exercise, style: string): boolean {
   }
 }
 
+interface ProfilePrefs {
+  equipment: string[];
+  goal: string | null;
+}
+
 export default function ExercisesPage() {
-  const { profile, onboardedAt } = useProfileStore();
+  const [profile, setProfile] = useState<ProfilePrefs | null>(null);
   const [filter, setFilter] = useState('all');
   const [style, setStyle] = useState('all');
   const [forYou, setForYou] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
   const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
 
-  const hasProfile = mounted && !!onboardedAt && !!profile;
+  useEffect(() => {
+    setMounted(true);
+    fetch('/api/profile')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.profile?.goal) setProfile({ equipment: data.profile.equipment ?? [], goal: data.profile.goal });
+      })
+      .catch(() => {});
+  }, []);
+
+  const hasProfile = mounted && !!profile;
 
   const filtered = exercises.filter((ex) => {
     const matchesFilter = filter === 'all' || ex.primaryMuscles.some((m) => m.toLowerCase() === filter);
     const matchesSearch = ex.name.toLowerCase().includes(search.toLowerCase());
     const matchesPreference =
-      !hasProfile || !forYou || !profile || isExerciseAvailable(ex, profile.equipment as string[], profile.goal);
+      !hasProfile || !forYou || !profile || isExerciseAvailable(ex, profile.equipment, profile.goal as Parameters<typeof isExerciseAvailable>[2]);
     return matchesFilter && matchesStyle(ex, style) && matchesSearch && matchesPreference;
   });
 

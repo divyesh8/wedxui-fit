@@ -24,7 +24,7 @@ export interface WorkoutPlan {
 
 export interface WorkoutDay {
   name: string;
-  exercises: { name: string; sets: number; reps: string; rest: string }[];
+  exercises: { id: string; name: string; sets: number; reps: string; rest: string }[];
 }
 
 export interface Quote {

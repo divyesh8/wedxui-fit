@@ -138,6 +138,7 @@ export function generatePlan(profile: OnboardingProfile): GeneratedPlan {
     return {
       name: template.name,
       exercises: picked.map((ex) => ({
+        id: ex.id,
         name: ex.name,
         sets: setsForDay,
         reps: scheme.reps,

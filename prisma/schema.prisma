@@ -344,9 +344,10 @@ model WorkoutLog {
   startedAt   DateTime
   completedAt DateTime?
   durationMin Int?
+  activeSeconds Int          @default(0) // heartbeat-tracked elapsed time, excludes paused time
   notes       String?        @db.Text
   xpEarned    Int            @default(0)
-  
+
   exercises   ExerciseLog[]
 
   createdAt   DateTime       @default(now())
@@ -358,8 +359,9 @@ model ExerciseLog {
   id           String      @id @default(cuid())
   workoutLogId String
   workoutLog   WorkoutLog  @relation(fields: [workoutLogId], references: [id], onDelete: Cascade)
-  exerciseId   String
-  
+  exerciseId   String      // static exercises.ts id — no FK, library isn't DB-seeded
+
+  completedAt  DateTime?   // set when the user marks this exercise done in a session
   sets         SetLog[]
   notes        String?     @db.Text
 

@@ -64,6 +64,20 @@ export const onboardingSchema = z.object({
 
 export type OnboardingProfile = z.infer<typeof onboardingSchema>;
 
+// Used by PATCH /api/profile — every onboarding field is independently editable
+// afterward, plus two profile-only override fields with no onboarding step.
+export const profileUpdateSchema = onboardingSchema
+  .omit({ name: true })
+  .partial()
+  .extend({
+    name: z.string().trim().min(1, 'Name cannot be empty').max(50).optional(),
+    image: z.string().url().optional().nullable(),
+    waterIntakeMl: z.coerce.number().int().min(500, 'Water goal must be 500–10000 ml').max(10000, 'Water goal must be 500–10000 ml').optional(),
+    targetWeightKg: z.coerce.number().min(30).max(300).optional().nullable(),
+  });
+
+export type ProfileUpdateInput = z.infer<typeof profileUpdateSchema>;
+
 /** Which profile fields each wizard step validates before advancing. */
 export const STEP_FIELDS: (keyof OnboardingProfile)[][] = [
   ['name', 'age', 'gender'],

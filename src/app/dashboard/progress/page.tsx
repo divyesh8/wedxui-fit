@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Activity, Flame, Weight, Plus, Trash2, LineChart, Sparkles } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useProfileStore } from '@/store/profile';
 import { useProgressStore, type ProgressEntry } from '@/store/progress';
 import { formatDate } from '@/lib/utils';
 
@@ -29,22 +28,38 @@ function TrendChart({ data, color }: { data: number[]; color: string }) {
 }
 
 export default function ProgressPage() {
-  const { profile, onboardedAt } = useProfileStore();
-  const { entries, addEntry, removeEntry } = useProgressStore();
+  const { entries, loadEntries, addEntry, removeEntry } = useProgressStore();
 
   const [mounted, setMounted] = useState(false);
+  const [onboarded, setOnboarded] = useState(false);
+  const [baselineEntry, setBaselineEntry] = useState<ProgressEntry | null>(null);
   const [weight, setWeight] = useState('');
   const [bodyFat, setBodyFat] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
 
-  useEffect(() => setMounted(true), []);
+  useEffect(() => {
+    setMounted(true);
+    loadEntries();
+    fetch('/api/profile')
+      .then((res) => res.json())
+      .then((data) => {
+        setOnboarded(Boolean(data.profile?.goal));
+        if (data.profile?.weightKg) {
+          setBaselineEntry({
+            id: 'baseline',
+            date: data.profile.createdAt,
+            weightKg: data.profile.weightKg,
+            bodyFatPct: data.profile.bodyFatPct ?? null,
+          });
+        }
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   if (!mounted) return null;
 
   // The onboarding measurement is the first real data point.
-  const baseline: ProgressEntry[] =
-    onboardedAt && profile?.weightKg
-      ? [{ id: 'baseline', date: onboardedAt, weightKg: profile.weightKg, bodyFatPct: profile.bodyFatPct ?? null }]
-      : [];
+  const baseline: ProgressEntry[] = baselineEntry ? [baselineEntry] : [];
   const allEntries = [...baseline, ...entries];
 
   const weightSeries = allEntries.map((e) => e.weightKg);
@@ -111,7 +126,7 @@ export default function ProgressPage() {
       </motion.div>
 
       {/* Not onboarded yet */}
-      {!onboardedAt && (
+      {!onboarded && (
         <Link
           href="/onboarding"
           className="flex items-center gap-3 p-5 rounded-2xl border border-wed-purple/40 bg-wed-purple/10 hover:bg-wed-purple/15 transition-all"

@@ -6,48 +6,80 @@ import { motion } from 'framer-motion';
 import { Flame, Dumbbell, Calendar, Zap, Trophy, Target, Sparkles, ArrowRight, Droplets, Quote } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { useProfileStore } from '@/store/profile';
 import { getRandomQuote, type AnimeQuote } from '@/data/quotes';
 import { calculateXPForLevel, getRankFromLevel } from '@/lib/utils';
+import type { WorkoutPlan } from '@/types';
 
-// Achievements unlock once workout logging ships — shown locked, never faked.
-const lockedAchievements = [
-  { name: 'First Blood', desc: 'Complete your first workout', icon: '🩸' },
-  { name: 'Week Warrior', desc: 'Reach a 7-day streak', icon: '🔥' },
-  { name: 'Centurion', desc: 'Log 100 workouts', icon: '💯' },
-];
+interface ProfileDTO {
+  xp: number;
+  level: number;
+  streakDays: number;
+  totalWorkouts: number;
+}
+
+interface AchievementDTO {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  unlockedAt: string | null;
+}
 
 export default function DashboardPage() {
-  const { profile, plan, targets, onboardedAt } = useProfileStore();
   const [mounted, setMounted] = useState(false);
   const [quote, setQuote] = useState<AnimeQuote | null>(null);
+  const [name, setName] = useState('Warrior');
+  const [profile, setProfile] = useState<ProfileDTO | null>(null);
+  const [achievements, setAchievements] = useState<AchievementDTO[]>([]);
+  const [plan, setPlan] = useState<WorkoutPlan | null>(null);
+  const [targets, setTargets] = useState<{ calories: number; waterMl: number } | null>(null);
+  const [nextDayIndex, setNextDayIndex] = useState(0);
+  const [onboarded, setOnboarded] = useState(false);
 
   useEffect(() => {
     setMounted(true);
     setQuote(getRandomQuote());
+
+    fetch('/api/profile')
+      .then((res) => res.json())
+      .then((data) => {
+        setName(data.user?.name ?? 'Warrior');
+        setProfile(data.profile);
+        setAchievements(data.achievements ?? []);
+        setOnboarded(Boolean(data.profile?.goal));
+      })
+      .catch(() => {});
+
+    fetch('/api/workouts/today')
+      .then(async (res) => {
+        if (!res.ok) return;
+        const data = await res.json();
+        setPlan(data.plan);
+        setTargets(data.targets);
+        setNextDayIndex(data.nextDayIndex);
+      })
+      .catch(() => {});
   }, []);
 
-  const dayLabels = ['Today', 'Tomorrow', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7'];
+  const dayLabels = ['Today', 'Tomorrow', 'Day 3'];
   const planWorkouts =
     mounted && plan
-      ? plan.days.slice(0, 3).map((day, i) => ({
+      ? Array.from({ length: Math.min(3, plan.days.length) }, (_, i) => plan.days[(nextDayIndex + i) % plan.days.length]).map((day, i) => ({
           day: dayLabels[i],
           name: day.name,
           type: `${day.exercises.length} exercises`,
-          duration: `${profile?.sessionMinutes ?? 60} min`,
         }))
       : [];
 
-  // Real starting values — XP and streaks stay at zero until workout logging ships.
-  const level = 1;
-  const xp = 0;
+  const level = profile?.level ?? 1;
+  const xp = profile?.xp ?? 0;
   const xpForNext = calculateXPForLevel(level);
   const rank = getRankFromLevel(level);
 
   const stats = [
     {
       label: 'Workout Streak',
-      value: '0 days',
+      value: mounted && profile ? `${profile.streakDays} days` : '0 days',
       icon: Flame,
       color: 'text-wed-purple',
       bg: 'bg-wed-purple/10',
@@ -84,11 +116,11 @@ export default function DashboardPage() {
         transition={{ duration: 0.5 }}
       >
         <h2 className="text-2xl font-bold text-white mb-1">
-          Welcome back, {mounted && profile?.name ? profile.name : 'Warrior'}
+          Welcome back, {mounted ? name : 'Warrior'}
         </h2>
         <p className="text-wed-gray-400">
           {mounted && plan
-            ? `Your ${plan.name} is ready. Next up: ${plan.days[0]?.name}.`
+            ? `Your ${plan.name} is ready. Next up: ${plan.days[nextDayIndex]?.name}.`
             : 'Your story starts with the first episode — forge your profile below.'}
         </p>
       </motion.div>
@@ -107,7 +139,7 @@ export default function DashboardPage() {
       )}
 
       {/* Onboarding CTA */}
-      {mounted && !onboardedAt && (
+      {mounted && !onboarded && (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}>
           <Link
             href="/onboarding"
@@ -182,7 +214,7 @@ export default function DashboardPage() {
               ) : (
                 planWorkouts.map((workout) => (
                   <div
-                    key={workout.name}
+                    key={`${workout.day}-${workout.name}`}
                     className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/5 hover:border-wed-purple/20 transition-all group"
                   >
                     <div className="flex items-center gap-4">
@@ -193,7 +225,7 @@ export default function DashboardPage() {
                         <p className="text-sm font-semibold text-white group-hover:text-wed-purple transition-colors">
                           {workout.name}
                         </p>
-                        <p className="text-xs text-wed-gray-400">{workout.type} • {workout.duration}</p>
+                        <p className="text-xs text-wed-gray-400">{workout.type}</p>
                       </div>
                     </div>
                     <span className="text-xs text-wed-gray-500 px-2 py-1 rounded-full bg-white/5">
@@ -247,7 +279,7 @@ export default function DashboardPage() {
         </motion.div>
       </div>
 
-      {/* Achievements (locked until earned) */}
+      {/* Achievements — real unlock state from UserAchievement */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -257,22 +289,22 @@ export default function DashboardPage() {
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
               <Target className="w-4 h-4 text-wed-pink" />
-              Achievements to Unlock
+              Achievements
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid sm:grid-cols-3 gap-3">
-              {lockedAchievements.map((ach) => (
+              {achievements.map((ach) => (
                 <div
-                  key={ach.name}
-                  className="flex items-center gap-3 p-4 rounded-xl bg-white/5 border border-white/5 opacity-70"
+                  key={ach.id}
+                  className={`flex items-center gap-3 p-4 rounded-xl bg-white/5 border border-white/5 ${ach.unlockedAt ? '' : 'opacity-70'}`}
                 >
-                  <span className="text-2xl grayscale">{ach.icon}</span>
+                  <span className={`text-2xl ${ach.unlockedAt ? '' : 'grayscale'}`}>{ach.icon}</span>
                   <div>
                     <p className="text-sm font-semibold text-white">{ach.name}</p>
-                    <p className="text-xs text-wed-gray-400">{ach.desc}</p>
+                    <p className="text-xs text-wed-gray-400">{ach.description}</p>
                   </div>
-                  <span className="ml-auto text-xs text-wed-gray-500">🔒</span>
+                  <span className="ml-auto text-xs text-wed-gray-500">{ach.unlockedAt ? '✓' : '🔒'}</span>
                 </div>
               ))}
             </div>

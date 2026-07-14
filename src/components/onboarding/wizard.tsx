@@ -118,6 +118,7 @@ export function OnboardingWizard({ onStageChange }: { onStageChange?: (stage: On
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
   const [errors, setErrors] = useState<Partial<Record<keyof OnboardingProfile, string>>>({});
   const [generating, setGenerating] = useState(false);
+  const [syncError, setSyncError] = useState<string | null>(null);
 
   useEffect(() => setMounted(true), []);
 
@@ -158,13 +159,26 @@ export function OnboardingWizard({ onStageChange }: { onStageChange?: (stage: On
       validateStep();
       return;
     }
+    setSyncError(null);
     setGenerating(true);
-    // Brief pause so the "forging" moment lands before the reveal.
-    setTimeout(() => {
-      const generated = generatePlan(result.data);
-      completeOnboarding(result.data, generated.plan, generated.targets);
-      setGenerating(false);
-    }, 1400);
+    // Persist to Neon and hold the "forging" animation for at least 1.4s so
+    // the reveal doesn't feel instant even on a fast connection.
+    const persist = fetch('/api/profile', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(result.data),
+    });
+    const pause = new Promise((resolve) => setTimeout(resolve, 1400));
+    Promise.all([persist, pause])
+      .then(([res]) => {
+        if (!res.ok) throw new Error('save failed');
+        const generated = generatePlan(result.data);
+        completeOnboarding(result.data, generated.plan, generated.targets);
+      })
+      .catch(() => {
+        setSyncError('We generated your protocol but could not save it to your account. Check your connection and try again.');
+      })
+      .finally(() => setGenerating(false));
   };
 
   if (!mounted) return null;
@@ -495,6 +509,10 @@ export function OnboardingWizard({ onStageChange }: { onStageChange?: (stage: On
             )}
           </motion.div>
         </AnimatePresence>
+
+        {syncError && (
+          <p className="mt-4 text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">{syncError}</p>
+        )}
 
         <div className="flex justify-between mt-8">
           <button

@@ -7,6 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 
+// Intentionally not wired to Neon — the Challenge/UserChallenge join-and-browse
+// flow doesn't exist yet, so there's nothing real to show here. The workout
+// completion transaction (api/workouts/[id]/exercises/[id]/complete) does bump
+// progress on any real UserChallenge rows a user has joined once that flow ships.
 const activeChallenges = [
   { id: '30day', name: '30-Day Transformation', desc: 'Complete a workout every day for 30 days', progress: 45, duration: 30, xpReward: 5000, badge: '🔥', daysLeft: 16 },
   { id: 'pushup100', name: '100 Push-Up Challenge', desc: 'Build up to 100 consecutive push-ups', progress: 70, duration: 21, xpReward: 2000, badge: '💪', daysLeft: 6 },

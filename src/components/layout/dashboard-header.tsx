@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Menu, Bell, Search } from 'lucide-react';
@@ -12,7 +12,15 @@ interface DashboardHeaderProps {
 export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
   const pathname = usePathname();
   const title = pathname.split('/').pop()?.replace(/-/g, ' ') || 'Dashboard';
-  
+  const [initial, setInitial] = useState('?');
+
+  useEffect(() => {
+    fetch('/api/profile')
+      .then((res) => res.json())
+      .then((data) => setInitial((data.user?.name ?? '?').charAt(0).toUpperCase()))
+      .catch(() => {});
+  }, []);
+
   return (
     <header className="h-16 glass-strong border-b border-white/5 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-30">
       <div className="flex items-center gap-3">
@@ -36,10 +44,9 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
         </div>
         <button className="relative p-2 rounded-lg hover:bg-white/5 text-wed-gray-400 transition-colors">
           <Bell className="w-5 h-5" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-wed-purple" />
         </button>
         <Link href="/dashboard/profile" className="w-8 h-8 rounded-full bg-gradient-purple flex items-center justify-center text-white text-xs font-bold">
-          W
+          {initial}
         </Link>
       </div>
     </header>
