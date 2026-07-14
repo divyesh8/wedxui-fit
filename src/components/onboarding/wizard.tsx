@@ -189,6 +189,14 @@ export function OnboardingWizard({ onStageChange }: { onStageChange?: (stage: On
               { icon: Flame, label: 'Daily Calories', value: `${targets.calories.toLocaleString()} kcal`, color: 'text-wed-purple' },
               { icon: Beef, label: 'Protein Target', value: `${targets.proteinG} g`, color: 'text-wed-blue' },
               { icon: Droplets, label: 'Water Target', value: `${(targets.waterMl / 1000).toFixed(1)} L`, color: 'text-wed-lime' },
+              // Macro fields only exist on plans generated after the nutrition-engine upgrade.
+              ...(targets.carbsG != null
+                ? [
+                    { icon: Flame, label: 'Carbs', value: `${targets.carbsG} g`, color: 'text-wed-pink' },
+                    { icon: Flame, label: 'Fat', value: `${targets.fatG} g`, color: 'text-wed-blue' },
+                    { icon: Flame, label: 'Fiber', value: `${targets.fiberG} g`, color: 'text-wed-lime' },
+                  ]
+                : []),
             ].map((t, i) => (
               <motion.div
                 key={t.label}
@@ -203,6 +211,19 @@ export function OnboardingWizard({ onStageChange }: { onStageChange?: (stage: On
               </motion.div>
             ))}
           </div>
+        )}
+
+        {targets && targets.warnings != null && targets.warnings.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-4 space-y-1"
+          >
+            {targets.warnings.map((w) => (
+              <p key={w} className="text-sm text-yellow-300">⚠ {w}</p>
+            ))}
+          </motion.div>
         )}
 
         <div className="space-y-3">

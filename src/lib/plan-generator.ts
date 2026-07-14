@@ -1,12 +1,18 @@
 import { exercises } from '@/data/exercises';
 import type { Exercise, WorkoutPlan, WorkoutDay } from '@/types';
 import type { OnboardingProfile } from '@/lib/validations/onboarding';
-import { calculateBMR, calculateTDEE } from '@/lib/utils';
+import { calculateBMI, calculateBMRMifflin, calculateTDEE } from '@/lib/utils';
 
 export interface PlanTargets {
   calories: number;
   proteinG: number;
+  carbsG: number;
+  fatG: number;
+  fiberG: number;
   waterMl: number;
+  bmi: number;
+  /** Safety flags surfaced to the user (BMI extremes, medical notes, floors applied). */
+  warnings: string[];
 }
 
 export interface GeneratedPlan {
@@ -148,18 +154,70 @@ export function generatePlan(profile: OnboardingProfile): GeneratedPlan {
     days,
   };
 
-  // Nutrition targets from BMR/TDEE with a goal-based adjustment.
-  const bmr = calculateBMR(profile.weightKg, profile.heightCm, profile.age, profile.gender);
-  const activity = 1.2 + profile.daysPerWeek * 0.05;
-  const goalFactor = profile.goal === 'FATLOSS' ? 0.85 : profile.goal === 'MUSCLE' || profile.goal === 'STRENGTH' ? 1.1 : 1.0;
-  const proteinPerKg = profile.goal === 'MUSCLE' || profile.goal === 'STRENGTH' ? 2.0 : 1.6;
+  return { plan, targets: calculateNutritionTargets(profile) };
+}
+
+/** Standard activity multipliers (sedentary 1.2 → extremely active 1.9), proxied from training days. */
+function activityMultiplier(daysPerWeek: number): number {
+  if (daysPerWeek <= 1) return 1.2;
+  if (daysPerWeek <= 3) return 1.375;
+  if (daysPerWeek <= 5) return 1.55;
+  if (daysPerWeek === 6) return 1.725;
+  return 1.9;
+}
+
+/**
+ * Calorie + macro engine (Mifflin–St Jeor → TDEE → goal adjustment → macro split).
+ * Deficit −500 kcal for fat loss, surplus +350 kcal for muscle/strength, else TDEE.
+ * Safety: calorie floors (1200 F / 1500 M), deficit suppressed when underweight,
+ * BMI-extreme and medical-note warnings surfaced to the user.
+ */
+export function calculateNutritionTargets(profile: OnboardingProfile): PlanTargets {
+  const warnings: string[] = [];
+  const bmi = calculateBMI(profile.weightKg, profile.heightCm);
+
+  const bmr = calculateBMRMifflin(profile.weightKg, profile.heightCm, profile.age, profile.gender);
+  const tdee = calculateTDEE(bmr, activityMultiplier(profile.daysPerWeek));
+
+  const isGain = profile.goal === 'MUSCLE' || profile.goal === 'STRENGTH';
+  let wantsDeficit = profile.goal === 'FATLOSS';
+
+  if (bmi < 18.5) {
+    warnings.push(`BMI ${bmi.toFixed(1)} is under 18.5 (underweight) — a calorie deficit is not advised. Consider professional guidance.`);
+    wantsDeficit = false; // never prescribe a deficit to an underweight user
+  }
+  if (bmi > 40) {
+    warnings.push(`BMI ${bmi.toFixed(1)} is above 40 — please consult a healthcare professional before starting this plan.`);
+  }
+  if (profile.medicalNotes.trim() || profile.injuries.trim()) {
+    warnings.push('You listed medical notes or injuries — check with your doctor before following these targets.');
+  }
+
+  let calories = Math.round(tdee + (wantsDeficit ? -500 : isGain ? 350 : 0));
+  const floor = profile.gender === 'FEMALE' ? 1200 : 1500;
+  if (calories < floor) {
+    calories = floor;
+    warnings.push(`Calorie target raised to a safe minimum of ${floor} kcal/day.`);
+  }
+
+  // Protein by goal (g/kg): loss 1.6 preserves lean mass, gain 2.0 supports hypertrophy.
+  let proteinPerKg = isGain ? 2.0 : profile.goal === 'ENDURANCE' ? 1.4 : 1.6;
+  if (profile.diet === 'HIGH_PROTEIN') proteinPerKg += 0.2;
+  const proteinG = Math.round(profile.weightKg * proteinPerKg);
+
+  // Fat as % of calories (keto overrides), carbs take the remainder.
+  const fatPct = profile.diet === 'KETO' ? 0.7 : wantsDeficit ? 0.28 : isGain ? 0.22 : 0.27;
+  const fatG = Math.round((calories * fatPct) / 9);
+  const carbsG = Math.max(0, Math.round((calories - proteinG * 4 - fatG * 9) / 4));
 
   return {
-    plan,
-    targets: {
-      calories: Math.round(calculateTDEE(bmr, activity) * goalFactor),
-      proteinG: Math.round(profile.weightKg * proteinPerKg),
-      waterMl: Math.round(profile.weightKg * 35),
-    },
+    calories,
+    proteinG,
+    carbsG,
+    fatG,
+    fiberG: Math.round((calories / 1000) * 14), // DGA: 14 g per 1000 kcal
+    waterMl: Math.round(profile.weightKg * 35),
+    bmi: Math.round(bmi * 10) / 10,
+    warnings,
   };
 }

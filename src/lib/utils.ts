@@ -79,6 +79,17 @@ export function calculateBMR(weightKg: number, heightCm: number, age: number, ge
   return 88.362 + 13.397 * weightKg + 4.799 * heightCm - 5.677 * age;
 }
 
+/**
+ * Mifflin–St Jeor BMR — preferred over Harris–Benedict for accuracy.
+ * Men: 10W + 6.25H − 5A + 5 · Women: 10W + 6.25H − 5A − 161 · OTHER: midpoint (−78).
+ */
+export function calculateBMRMifflin(weightKg: number, heightCm: number, age: number, gender: Gender): number {
+  const base = 10 * weightKg + 6.25 * heightCm - 5 * age;
+  if (gender === 'MALE') return base + 5;
+  if (gender === 'FEMALE') return base - 161;
+  return base - 78;
+}
+
 export function calculateTDEE(bmr: number, activityMultiplier: number): number {
   return bmr * activityMultiplier;
 }
