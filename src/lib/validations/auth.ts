@@ -21,12 +21,3 @@ export const loginSchema = z.object({
   email: z.string().trim().toLowerCase().email('Enter a valid email'),
   password: z.string().min(1, 'Enter your password'),
 });
-
-export const otpSchema = z.object({
-  email: z.string().trim().toLowerCase().email(),
-  code: z.string().regex(/^\d{6}$/, 'Enter the 6-digit code'),
-});
-
-export const emailSchema = z.object({
-  email: z.string().trim().toLowerCase().email(),
-});
