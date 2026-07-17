@@ -113,6 +113,7 @@ model User {
   image         String?
   password      String    @db.Text // bcrypt hash — required for credential auth
   role          String    @default("USER") // USER, ADMIN, COACH
+  isPro         Boolean   @default(false) // Pro AI features; set manually until payments land
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -127,6 +128,7 @@ model User {
   challenges     UserChallenge[]
   settings       UserSettings?
   notifications  Notification[]
+  aiReviews      AiReview[]
 
   @@map("users")
 }
@@ -206,6 +208,18 @@ model UserProfile {
   diet         DietPreference?
   injuries     String?         @db.Text
   medicalNotes String?         @db.Text
+
+  // AI intelligence layer (physique/style/goals from onboarding v2; Json blobs
+  // hold the athlete profile + generated plans with their reasoning traces)
+  physique        String?
+  trainingStyle   String?
+  goalsRanked     String[]        @default([])
+  stressLevel     Int?
+  occupation      String?
+  nutritionProfile Json?
+  athleteProfile  Json?
+  aiPlan          Json?
+  aiNutritionPlan Json?
 
   // Gamification
   xp           Int             @default(0)
@@ -524,6 +538,20 @@ model Notification {
 
   @@index([userId, isRead])
   @@map("notifications")
+}
+
+// ─── AI WEEKLY REVIEWS (Pro) ───────────────────────────
+
+model AiReview {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  weekStart DateTime // Monday of the reviewed week
+  content   Json     // adherence, streak trend, recommendations + reasoning
+  createdAt DateTime @default(now())
+
+  @@index([userId, weekStart])
+  @@map("ai_reviews")
 }
 
 // ─── QUOTES ────────────────────────────────────────────

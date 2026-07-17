@@ -9,10 +9,11 @@ export async function GET() {
   const sessionUser = await getSessionUser();
   if (!sessionUser) return NextResponse.json({ error: 'Not authenticated.' }, { status: 401 });
 
-  const [profile, allAchievements, unlocked] = await Promise.all([
+  const [profile, allAchievements, unlocked, userRow] = await Promise.all([
     prisma.userProfile.findUnique({ where: { userId: sessionUser.id } }),
     prisma.achievement.findMany({ orderBy: { xpReward: 'asc' } }),
     prisma.userAchievement.findMany({ where: { userId: sessionUser.id } }),
+    prisma.user.findUnique({ where: { id: sessionUser.id }, select: { isPro: true } }),
   ]);
   const unlockedMap = new Map(unlocked.map((u) => [u.achievementId, u.unlockedAt]));
   const achievements = allAchievements.map((a) => ({
@@ -28,6 +29,7 @@ export async function GET() {
     profile,
     achievements,
     achievementsCount: unlocked.length,
+    isPro: userRow?.isPro ?? false,
   });
 }
 

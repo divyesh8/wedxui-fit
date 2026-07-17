@@ -1,5 +1,8 @@
 import type { UserProfile } from '@prisma/client';
 import type { OnboardingProfile } from '@/lib/validations/onboarding';
+import type { WorkoutPlan } from '@/types';
+import { generatePlan, type PlanTargets } from '@/lib/plan-generator';
+import type { AiPlan, AiNutritionPlan } from '@/lib/ai/types';
 
 /**
  * Maps a persisted UserProfile row back into the shape generatePlan() expects.
@@ -25,6 +28,32 @@ export function profileToGeneratorInput(profile: UserProfile, name: string): Onb
     injuries: profile.injuries ?? '',
     medicalNotes: profile.medicalNotes ?? '',
   };
+}
+
+/**
+ * The single source of truth for "what plan is this user on": the AI-generated
+ * plan when one exists, else the legacy deterministic generator. Session
+ * tracking, streaks, and XP work identically over both.
+ */
+export function planFromProfile(row: UserProfile, name: string): { plan: WorkoutPlan; targets: PlanTargets; isAi: boolean } {
+  const aiPlan = row.aiPlan as unknown as (AiPlan & { generatedAt?: string }) | null;
+  if (aiPlan?.days?.length) {
+    const plan: WorkoutPlan = {
+      id: `ai-${aiPlan.templateId}`,
+      name: aiPlan.name,
+      type: aiPlan.type,
+      difficulty: row.experience ?? 'BEGINNER',
+      days: aiPlan.days.map((d) => ({
+        name: d.name,
+        exercises: d.exercises.map((e) => ({ id: e.id, name: e.name, sets: e.sets, reps: e.reps, rest: e.rest })),
+      })),
+    };
+    const aiNutrition = row.aiNutritionPlan as unknown as AiNutritionPlan | null;
+    const targets = aiNutrition?.targets ?? generatePlan(profileToGeneratorInput(row, name)).targets;
+    return { plan, targets, isAi: true };
+  }
+  const legacy = generatePlan(profileToGeneratorInput(row, name));
+  return { plan: legacy.plan, targets: legacy.targets, isAi: false };
 }
 
 /** Flat XP reward per completed workout — assumption, no spec given: base + per-exercise. */

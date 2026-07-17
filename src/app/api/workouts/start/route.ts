@@ -2,8 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { getSessionUser } from '@/lib/auth/session';
-import { generatePlan } from '@/lib/plan-generator';
-import { profileToGeneratorInput } from '@/lib/workout-session';
+import { planFromProfile } from '@/lib/workout-session';
 
 export const runtime = 'nodejs';
 
@@ -28,7 +27,7 @@ export async function POST(req: Request) {
   });
   if (existing) return NextResponse.json({ session: existing });
 
-  const { plan } = generatePlan(profileToGeneratorInput(profile, sessionUser.name ?? sessionUser.username));
+  const { plan } = planFromProfile(profile, sessionUser.name ?? sessionUser.username);
   const day = plan.days[parsed.data.dayIndex];
   if (!day) return NextResponse.json({ error: 'dayIndex out of range.' }, { status: 400 });
 
