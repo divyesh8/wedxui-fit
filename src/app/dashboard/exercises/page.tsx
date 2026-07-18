@@ -6,6 +6,7 @@ import { Search, Info, X, AlertTriangle, Lightbulb, Sparkles } from 'lucide-reac
 import { exercises, exerciseCategories, difficultyLabels } from '@/data/exercises';
 import { Exercise } from '@/types';
 import { isExerciseAvailable } from '@/lib/plan-generator';
+import { exerciseMeta } from '@/data/knowledge/exercise-meta';
 
 // Training-style groupings by required equipment.
 const styleFilters = [
@@ -35,6 +36,7 @@ interface ProfilePrefs {
 
 export default function ExercisesPage() {
   const [profile, setProfile] = useState<ProfilePrefs | null>(null);
+  const [isPro, setIsPro] = useState(false);
   const [filter, setFilter] = useState('all');
   const [style, setStyle] = useState('all');
   const [forYou, setForYou] = useState(true);
@@ -48,6 +50,7 @@ export default function ExercisesPage() {
       .then((res) => res.json())
       .then((data) => {
         if (data.profile?.goal) setProfile({ equipment: data.profile.equipment ?? [], goal: data.profile.goal });
+        setIsPro(Boolean(data.isPro));
       })
       .catch(() => {});
   }, []);
@@ -220,6 +223,43 @@ export default function ExercisesPage() {
                   </ul>
                 </div>
               </div>
+
+              {/* Video instruction — Pro feature; structure is video-ready, real
+                  assets pending. Free users keep the illustrated guide. */}
+              {(() => {
+                const meta = exerciseMeta[selectedExercise.id];
+                return (
+                  <>
+                    <div className="glass p-4 rounded-xl mb-6">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="text-sm font-semibold text-wed-gray-200">Video Instruction</h4>
+                        {!isPro && <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-wed-purple/20 text-wed-purple uppercase tracking-wide">Pro</span>}
+                      </div>
+                      {isPro && meta?.videoUrl ? (
+                        <video src={meta.videoUrl} controls className="w-full rounded-lg" />
+                      ) : (
+                        <p className="text-xs text-wed-gray-400">
+                          {isPro
+                            ? 'HD video for this exercise is coming soon — the written technique guide above covers the full movement.'
+                            : 'HD video and slow-motion breakdowns are part of Pro. Free includes the full written technique guide.'}
+                        </p>
+                      )}
+                    </div>
+                    {meta && (
+                      <div className="grid sm:grid-cols-2 gap-4 mb-6">
+                        <div className="glass p-4 rounded-xl">
+                          <h4 className="text-sm font-semibold text-wed-blue mb-2">Easier Variation</h4>
+                          <p className="text-xs text-wed-gray-300">{meta.beginnerModification}</p>
+                        </div>
+                        <div className="glass p-4 rounded-xl">
+                          <h4 className="text-sm font-semibold text-wed-purple mb-2">Next Progression</h4>
+                          <p className="text-xs text-wed-gray-300">{meta.advancedProgression}</p>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
 
               {selectedExercise.alternatives.length > 0 && (
                 <div>

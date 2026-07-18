@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Play, Pause, Clock, CheckCircle, Circle, ChevronRight, Dumbbell, Timer, SkipForward } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,10 @@ import { useWorkoutTimer } from '@/hooks/use-workout-timer';
 import { useRestTimer } from '@/hooks/use-rest-timer';
 import { useUIStore } from '@/store';
 import type { WorkoutPlan } from '@/types';
+import type { AiPlan } from '@/lib/ai/types';
+import { renderAll } from '@/lib/ai/explain';
+import { Brain } from 'lucide-react';
+import { exercises as exerciseLibrary } from '@/data/exercises';
 
 interface ExerciseLogDTO {
   id: string;
@@ -54,6 +58,7 @@ export default function WorkoutsPage() {
   const [session, setSession] = useState<SessionDTO | null>(null);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [starting, setStarting] = useState(false);
+  const [aiPlan, setAiPlan] = useState<AiPlan | null>(null);
 
   const loadToday = () => {
     fetch('/api/workouts/today')
@@ -80,6 +85,11 @@ export default function WorkoutsPage() {
   useEffect(() => {
     loadToday();
     loadHistory();
+    // Reasoning traces for the "Why?" expandables on the plan tab.
+    fetch('/api/ai/plan')
+      .then((r) => r.json())
+      .then((d) => setAiPlan(d.aiPlan ?? null))
+      .catch(() => {});
   }, []);
 
   const timer = useWorkoutTimer(session?.id ?? null, session?.activeSeconds ?? 0);
@@ -89,11 +99,23 @@ export default function WorkoutsPage() {
     return plan.days.find((d) => d.name === session.name) ?? null;
   }, [plan, session]);
 
+  // Session logs are the source of truth — a plan regenerated mid-session must
+  // not orphan the in-progress workout, so decorate logs from the plan day when
+  // it still matches and fall back to the static library for names.
   const exerciseRows = useMemo(() => {
-    if (!activeDay || !session) return [];
-    return activeDay.exercises.map((ex) => {
-      const log = session.exercises.find((e) => e.exerciseId === ex.id);
-      return { ...ex, logId: log?.id ?? '', completed: Boolean(log?.completedAt) };
+    if (!session) return [];
+    return session.exercises.map((log) => {
+      const dayEx = activeDay?.exercises.find((e) => e.id === log.exerciseId);
+      const lib = exerciseLibrary.find((e) => e.id === log.exerciseId);
+      return {
+        id: log.exerciseId,
+        name: dayEx?.name ?? lib?.name ?? log.exerciseId,
+        sets: dayEx?.sets ?? 3,
+        reps: dayEx?.reps ?? '8-12',
+        rest: dayEx?.rest ?? '90s',
+        logId: log.id,
+        completed: Boolean(log.completedAt),
+      };
     });
   }, [activeDay, session]);
 
@@ -168,9 +190,11 @@ export default function WorkoutsPage() {
         ))}
       </div>
 
-      <AnimatePresence mode="wait">
+      {/* No AnimatePresence here — its mode="wait" exit transition wedges in this
+          app (hidden-tab throttling never completes the exit), freezing tab switches. */}
+      <div>
         {activeTab === 'today' && (
-          <motion.div key="today" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
+          <motion.div key="today" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
             <Card className="glow-purple">
               <CardContent className="p-6">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -250,18 +274,54 @@ export default function WorkoutsPage() {
         )}
 
         {activeTab === 'plans' && plan && (
-          <motion.div key="plans" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-3">
+          <motion.div key="plans" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
             <Card className="glow-purple">
               <CardContent className="p-5">
                 <h3 className="text-lg font-bold text-white">{plan.name}</h3>
                 <p className="text-xs text-wed-gray-400">{plan.days.length} days / week • {plan.difficulty}</p>
+                {aiPlan && (
+                  <div className="mt-3 pt-3 border-t border-white/10">
+                    <p className="text-xs font-semibold text-wed-purple mb-1.5 flex items-center gap-1"><Brain className="w-3.5 h-3.5" /> Why this program</p>
+                    <ul className="space-y-1">
+                      {renderAll(aiPlan.reasoning).map((l, i) => (
+                        <li key={i} className="text-[11px] text-wed-gray-400 leading-relaxed">• {l}</li>
+                      ))}
+                    </ul>
+                    <div className="mt-2 space-y-0.5">
+                      {aiPlan.validations.map((v, i) => (
+                        <p key={i} className={`text-[11px] ${v.startsWith('✓') ? 'text-wed-lime' : 'text-yellow-300'}`}>{v}</p>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
-            {plan.days.map((day) => (
+            {plan.days.map((day, dayIdx) => (
               <Card key={day.name}>
                 <CardContent className="p-4">
                   <p className="font-semibold text-white mb-2">{day.name}</p>
-                  <p className="text-xs text-wed-gray-400">{day.exercises.map((e) => e.name).join(' • ')}</p>
+                  {aiPlan?.days[dayIdx] ? (
+                    <div className="space-y-2">
+                      {aiPlan.days[dayIdx].exercises.map((ex) => (
+                        <div key={ex.id} className="border-b border-white/5 pb-1.5 last:border-0 last:pb-0">
+                          <div className="flex items-center justify-between">
+                            <p className="text-xs text-wed-gray-200">{ex.name}</p>
+                            <p className="text-[11px] text-wed-gray-500">{ex.sets} × {ex.reps} · {ex.rest}</p>
+                          </div>
+                          <details>
+                            <summary className="text-[10px] text-wed-purple cursor-pointer select-none hover:brightness-125">Why?</summary>
+                            <ul className="mt-1 space-y-0.5">
+                              {renderAll(ex.reasoning).map((l, i) => (
+                                <li key={i} className="text-[10px] text-wed-gray-400 leading-relaxed">• {l}</li>
+                              ))}
+                            </ul>
+                          </details>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-wed-gray-400">{day.exercises.map((e) => e.name).join(' • ')}</p>
+                  )}
                 </CardContent>
               </Card>
             ))}
@@ -269,7 +329,7 @@ export default function WorkoutsPage() {
         )}
 
         {activeTab === 'history' && (
-          <motion.div key="history" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-3">
+          <motion.div key="history" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
             {history.length === 0 ? (
               <p className="text-sm text-wed-gray-400 py-8 text-center">No completed workouts yet — finish one to see it here.</p>
             ) : (
@@ -298,7 +358,7 @@ export default function WorkoutsPage() {
             )}
           </motion.div>
         )}
-      </AnimatePresence>
+      </div>
     </div>
   );
 }
