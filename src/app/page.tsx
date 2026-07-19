@@ -2,7 +2,7 @@ import { ParticleCanvas } from '@/components/landing/particle-canvas';
 import { SiteNav } from '@/components/landing/site-nav';
 import { HeroSection } from '@/components/landing/hero-section';
 import { AICoachSection } from '@/components/landing/ai-coach-section';
-import { MotivationSection } from '@/components/landing/motivation-section';
+import { FeaturesShowcase } from '@/components/landing/features-showcase';
 import { Footer } from '@/components/landing/footer';
 
 // The landing page is marketing only: workouts, exercises, challenges, tools,
@@ -14,7 +14,7 @@ export default function HomePage() {
       <SiteNav />
       <HeroSection />
       <AICoachSection />
-      <MotivationSection />
+      <FeaturesShowcase />
       <Footer />
     </main>
   );

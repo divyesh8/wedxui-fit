@@ -27,7 +27,7 @@ const STEP_TITLES = [
   'Your Athlete Profile',
 ];
 
-const ACCENT = '#b026ff';
+const ACCENT = '#FF3B30';
 
 type FormState = Omit<AiOnboardingInput, 'physique' | 'trainingStyle' | 'experienceTier'> & {
   physique: AiOnboardingInput['physique'] | '';
@@ -58,7 +58,7 @@ function Chip({ active, onClick, children, badge }: { active: boolean; onClick: 
     <button type="button" onClick={onClick}
       className={cn('relative px-4 py-2.5 rounded-xl border text-sm font-medium transition-all',
         active
-          ? 'border-wed-purple bg-wed-purple/20 text-white shadow-[0_0_16px_rgba(176,38,255,0.25)]'
+          ? 'border-wed-purple bg-wed-purple/20 text-white shadow-[0_0_16px_rgba(255,59,48,0.25)]'
           : 'border-white/10 bg-white/5 text-wed-gray-300 hover:border-white/25 hover:text-white')}>
       {children}
       {badge && (

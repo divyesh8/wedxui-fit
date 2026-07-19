@@ -14,6 +14,7 @@ import type { AiPlan } from '@/lib/ai/types';
 import { renderAll } from '@/lib/ai/explain';
 import { Brain } from 'lucide-react';
 import { exercises as exerciseLibrary } from '@/data/exercises';
+import { Confetti } from '@/components/ui/confetti';
 
 interface ExerciseLogDTO {
   id: string;
@@ -59,6 +60,7 @@ export default function WorkoutsPage() {
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [starting, setStarting] = useState(false);
   const [aiPlan, setAiPlan] = useState<AiPlan | null>(null);
+  const [celebrate, setCelebrate] = useState(0);
 
   const loadToday = () => {
     fetch('/api/workouts/today')
@@ -138,6 +140,7 @@ export default function WorkoutsPage() {
       return;
     }
     if (data.workoutCompleted) {
+      setCelebrate((n) => n + 1); // retrigger confetti each completion
       addToast(`Workout complete! +${data.workoutLog.xpEarned} XP · ${data.profile.streakDays}-day streak`, 'success');
       for (const a of data.unlockedAchievements ?? []) {
         addToast(`Achievement unlocked: ${a.icon} ${a.name}`, 'success');
@@ -171,6 +174,7 @@ export default function WorkoutsPage() {
 
   return (
     <div className="space-y-6">
+      <Confetti show={celebrate > 0} key={celebrate} />
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
         <h2 className="text-2xl font-bold text-white mb-1">Workouts</h2>
         <p className="text-wed-gray-400">Train with purpose. Every session is a step forward.</p>

@@ -5,7 +5,7 @@ import { motion, useInView } from 'framer-motion';
 import { Bot, Dumbbell, Flame, Zap, Apple, Moon } from 'lucide-react';
 
 const coachMessages = [
-  { text: 'Welcome, warrior. I am your WEDXUI coach. Ready to level up today?', icon: Zap },
+  { text: 'I\'m your WEDXUI coach. Tell me your goal and equipment — I\'ll build the plan and explain every choice.', icon: Zap },
   { text: 'Push past your limits. That\'s where growth lives.', icon: Flame },
   { text: 'Your only competition is who you were yesterday.', icon: Dumbbell },
   { text: 'Rest is part of the program. Recovery makes you stronger.', icon: Moon },
@@ -58,7 +58,7 @@ export function AICoachSection() {
           </span>
           <h2 className="text-4xl md:text-5xl font-black text-white mb-4">AI COACH</h2>
           <p className="text-wed-gray-300 max-w-xl mx-auto">
-            A holographic guide trained to push you past every limit. Personalized tips, workout suggestions, and relentless motivation.
+            An AI coach that reads your goal, equipment, and recovery — then recommends, adapts, and explains. Every suggestion is grounded in exercise science.
           </p>
         </motion.div>
 

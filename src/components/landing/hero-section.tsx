@@ -26,8 +26,8 @@ export function HeroSection() {
       className="relative min-h-screen flex items-center justify-center overflow-hidden px-4"
     >
       {/* Gradient orbs */}
-      <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-wed-purple/10 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-wed-blue/10 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-wed-purple/15 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-wed-pink/10 rounded-full blur-[100px] pointer-events-none" />
 
       <div className="relative z-10 max-w-5xl mx-auto text-center">
         {/* Badge */}
@@ -38,7 +38,7 @@ export function HeroSection() {
           className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-8"
         >
           <Sparkles className="w-4 h-4 text-wed-purple" />
-          <span className="text-sm font-medium text-wed-gray-200">AI-Powered Fitness Platform</span>
+          <span className="text-sm font-medium text-wed-gray-200">AI-Powered Fitness Intelligence</span>
         </motion.div>
 
         {/* Headline */}
@@ -48,9 +48,8 @@ export function HeroSection() {
           transition={{ duration: 0.7, delay: 0.3 }}
           className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight leading-[0.95] mb-6"
         >
-          <span className="block text-white">BECOME</span>
-          <span className="block text-gradient">THE MAIN CHARACTER</span>
-          <span className="block text-white">OF YOUR STORY.</span>
+          <span className="block text-white">TRAINING THAT</span>
+          <span className="block text-gradient">THINKS FOR ITSELF.</span>
         </motion.h1>
 
         {/* Subtitle */}
@@ -60,8 +59,8 @@ export function HeroSection() {
           transition={{ duration: 0.6, delay: 0.5 }}
           className="text-lg md:text-xl text-wed-gray-300 max-w-2xl mx-auto mb-10 leading-relaxed"
         >
-          Every rep writes your legend. Every set levels you up. Forge the future you with AI coaching,
-          elite workouts, and a gamified journey built for warriors.
+          WEDXUI FIT reasons through your physique goal, equipment, recovery, and nutrition —
+          then builds a plan and explains every exercise, set, and rest period it chose. No random workouts. Ever.
         </motion.p>
 
         {/* CTAs */}
@@ -75,18 +74,18 @@ export function HeroSection() {
             href="/signup"
             className="group px-8 py-4 rounded-full bg-gradient-purple text-white font-bold text-lg hover:brightness-110 transition-all btn-glow flex items-center gap-2"
           >
-            Start My Journey
+            Build My Program
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </Link>
           <button
             onClick={scrollToCoach}
             className="px-8 py-4 rounded-full border border-white/20 text-white font-semibold hover:bg-white/5 transition-all"
           >
-            Explore More
+            See How It Thinks
           </button>
         </motion.div>
 
-        {/* Stats */}
+        {/* Honest capability stats */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={isVisible ? { opacity: 1, y: 0 } : {}}
@@ -95,21 +94,21 @@ export function HeroSection() {
         >
           <div className="text-center">
             <div className="text-3xl md:text-4xl font-black text-white">
-              <CountUp end={40} suffix="+" duration={2.5} />
+              <CountUp end={11} duration={2.5} />
             </div>
-            <div className="text-sm text-wed-gray-400 mt-1">Exercises</div>
+            <div className="text-sm text-wed-gray-400 mt-1">Physique Goals</div>
           </div>
           <div className="text-center">
             <div className="text-3xl md:text-4xl font-black text-white">
-              <CountUp end={15} suffix="+" duration={2.5} />
+              <CountUp end={9} duration={2.5} />
             </div>
-            <div className="text-sm text-wed-gray-400 mt-1">Fitness Tools</div>
+            <div className="text-sm text-wed-gray-400 mt-1">Training Goals</div>
           </div>
           <div className="text-center">
             <div className="text-3xl md:text-4xl font-black text-white">
-              <CountUp end={30} suffix="+" duration={2.5} />
+              <CountUp end={14} duration={2.5} />
             </div>
-            <div className="text-sm text-wed-gray-400 mt-1">Anime Legends</div>
+            <div className="text-sm text-wed-gray-400 mt-1">Fitness Calculators</div>
           </div>
         </motion.div>
       </div>
@@ -128,7 +127,7 @@ export function HeroSection() {
             className="w-1.5 h-1.5 rounded-full bg-wed-purple"
           />
         </div>
-        <span className="text-xs text-wed-gray-400">Scroll to begin</span>
+        <span className="text-xs text-wed-gray-400">Scroll to explore</span>
       </motion.div>
     </section>
   );

@@ -11,12 +11,11 @@ export function Footer() {
           {/* Brand */}
           <div className="lg:col-span-1">
             <span className="text-2xl font-black tracking-tight">
-              <span className="text-white">WED</span>
-              <span className="text-wed-purple">XUI</span>
-              <span className="text-white font-light"> Fit</span>
+              <span className="text-white">WEDXUI</span>
+              <span className="text-wed-purple"> FIT</span>
             </span>
             <p className="text-sm text-wed-gray-400 mt-3 max-w-xs">
-              Become the strongest version of yourself. Train like the main character of your story.
+              AI-powered training and nutrition that explains every decision it makes. Built for people who want to know why.
             </p>
             <div className="flex gap-3 mt-4">
               {[Twitter, Instagram, Youtube, Github].map((Icon, i) => (
@@ -77,7 +76,7 @@ export function Footer() {
         {/* Bottom */}
         <div className="border-t border-white/5 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-wed-gray-500">
-            © {new Date().getFullYear()} WEDXUI Fit. All rights reserved. Built for warriors.
+            © {new Date().getFullYear()} WEDXUI FIT. All rights reserved.
           </p>
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-wed-lime animate-pulse" />

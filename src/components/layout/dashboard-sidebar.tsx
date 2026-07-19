@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard,
   Dumbbell,
+  Apple,
   Search,
   Trophy,
   Calculator,
@@ -25,6 +26,7 @@ import { cn } from '@/lib/utils';
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/dashboard/workouts', label: 'Workouts', icon: Dumbbell },
+  { href: '/dashboard/diet', label: 'Diet', icon: Apple },
   { href: '/dashboard/exercises', label: 'Exercises', icon: Search },
   { href: '/dashboard/challenges', label: 'Challenges', icon: Trophy },
   { href: '/dashboard/tools', label: 'Tools', icon: Calculator },

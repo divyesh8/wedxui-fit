@@ -8,7 +8,7 @@ import { Menu, X } from 'lucide-react';
 const navLinks = [
   { href: '#hero', label: 'Home' },
   { href: '#ai-coach', label: 'AI Coach' },
-  { href: '#motivation', label: 'Motivation' },
+  { href: '#features', label: 'Features' },
 ];
 
 export function SiteNav() {
@@ -52,9 +52,8 @@ export function SiteNav() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
         <a href="#hero" onClick={(e) => { e.preventDefault(); scrollTo('#hero'); }} className="flex items-center gap-1">
           <span className="text-2xl font-black tracking-tight">
-            <span className="text-white">WED</span>
-            <span className="text-wed-purple">XUI</span>
-            <span className="text-white font-light"> Fit</span>
+            <span className="text-white">WEDXUI</span>
+            <span className="text-wed-purple"> FIT</span>
           </span>
         </a>
 
@@ -94,7 +93,7 @@ export function SiteNav() {
             href="/signup"
             className="px-5 py-2.5 rounded-full bg-gradient-purple text-white text-sm font-semibold hover:brightness-110 transition-all btn-glow"
           >
-            Start Journey
+            Get Started
           </Link>
         </div>
 
@@ -144,7 +143,7 @@ export function SiteNav() {
                   href="/signup"
                   className="block w-full text-center px-5 py-3 rounded-full bg-gradient-purple text-white text-sm font-semibold"
                 >
-                  Start Journey
+                  Get Started
                 </Link>
               </li>
             </ul>
