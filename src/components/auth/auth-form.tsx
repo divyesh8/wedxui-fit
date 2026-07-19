@@ -83,10 +83,10 @@ export function AuthForm({ mode }: Props) {
             <Zap className="w-6 h-6 text-wed-purple" />
           </div>
           <h1 className="text-2xl font-black text-white">
-            {isSignup ? 'Begin Your Arc' : 'Welcome Back, Warrior'}
+            {isSignup ? 'Create Your Account' : 'Welcome Back'}
           </h1>
           <p className="text-sm text-wed-gray-400 mt-2">
-            {isSignup ? 'Every legend has a first episode. This is yours.' : 'Your training continues where you left off.'}
+            {isSignup ? 'AI-powered training and nutrition, built around you.' : 'Your training continues where you left off.'}
           </p>
         </div>
 
@@ -99,7 +99,7 @@ export function AuthForm({ mode }: Props) {
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="your_hero_name"
+                  placeholder="your_username"
                   autoComplete="username"
                   className={inputClass}
                 />

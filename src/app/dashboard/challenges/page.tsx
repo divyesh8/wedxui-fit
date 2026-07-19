@@ -35,7 +35,7 @@ export default function ChallengesPage() {
     <div className="space-y-6">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
         <h2 className="text-2xl font-bold text-white mb-1">Challenges</h2>
-        <p className="text-wed-gray-400">Accept quests. Earn badges. Become legendary.</p>
+        <p className="text-wed-gray-400">Structured challenges. Earned badges. Real progress.</p>
       </motion.div>
 
       {/* Stats */}

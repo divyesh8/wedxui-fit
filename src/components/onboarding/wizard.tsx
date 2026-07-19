@@ -386,7 +386,7 @@ export function OnboardingWizard({ onStageChange }: { onStageChange?: (stage: On
   return (
     <div className="max-w-2xl mx-auto w-full pb-16">
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-white mb-1">Forge Your Character</h2>
+        <h2 className="text-2xl font-bold text-white mb-1">Build Your Athlete Profile</h2>
         <p className="text-wed-gray-400 text-sm">Step {step + 1} of 7 — {STEP_TITLES[step]}</p>
         <div className="h-1 rounded-full bg-white/10 mt-4">
           <motion.div className="h-full rounded-full bg-gradient-purple" animate={{ width: `${progress}%` }} transition={{ duration: 0.3 }} />
@@ -500,7 +500,7 @@ export function OnboardingWizard({ onStageChange }: { onStageChange?: (stage: On
           {step === 5 && (
             <>
               <div className="grid sm:grid-cols-2 gap-4">
-                <Field label="Name"><input className={inputCls} value={form.name} onChange={(e) => set('name', e.target.value)} placeholder="Your hero name" /></Field>
+                <Field label="Name"><input className={inputCls} value={form.name} onChange={(e) => set('name', e.target.value)} placeholder="Your name" /></Field>
                 <Field label="Age"><input type="number" className={inputCls} value={form.ageStr} onChange={(e) => set('ageStr', e.target.value)} placeholder="22" /></Field>
                 <Field label="Gender">
                   <div className="flex gap-2">

@@ -28,7 +28,7 @@ interface AchievementDTO {
 export default function DashboardPage() {
   const [mounted, setMounted] = useState(false);
   const [quote, setQuote] = useState<AnimeQuote | null>(null);
-  const [name, setName] = useState('Warrior');
+  const [name, setName] = useState('Athlete');
   const [profile, setProfile] = useState<ProfileDTO | null>(null);
   const [achievements, setAchievements] = useState<AchievementDTO[]>([]);
   const [plan, setPlan] = useState<WorkoutPlan | null>(null);
@@ -43,7 +43,7 @@ export default function DashboardPage() {
     fetch('/api/profile')
       .then((res) => res.json())
       .then((data) => {
-        setName(data.user?.name ?? 'Warrior');
+        setName(data.user?.name ?? 'Athlete');
         setProfile(data.profile);
         setAchievements(data.achievements ?? []);
         setOnboarded(Boolean(data.profile?.goal));
@@ -116,12 +116,12 @@ export default function DashboardPage() {
         transition={{ duration: 0.5 }}
       >
         <h2 className="text-2xl font-bold text-white mb-1">
-          Welcome back, {mounted ? name : 'Warrior'}
+          Welcome back, {mounted ? name : 'Athlete'}
         </h2>
         <p className="text-wed-gray-400">
           {mounted && plan
             ? `Your ${plan.name} is ready. Next up: ${plan.days[nextDayIndex]?.name}.`
-            : 'Your story starts with the first episode — forge your profile below.'}
+            : 'Complete your assessment below and the AI will build your program.'}
         </p>
       </motion.div>
 
@@ -150,9 +150,9 @@ export default function DashboardPage() {
                 <Sparkles className="w-5 h-5 text-wed-purple" />
               </div>
               <div>
-                <p className="text-sm font-bold text-white">Forge your profile</p>
+                <p className="text-sm font-bold text-white">Build your athlete profile</p>
                 <p className="text-xs text-wed-gray-400">
-                  Take the 2-minute assessment and get a personalized training protocol.
+                  Take the 2-minute AI assessment and get a fully personalized program.
                 </p>
               </div>
             </div>

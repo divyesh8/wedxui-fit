@@ -4,25 +4,26 @@
 
 @layer base {
   :root {
-    --background: 240 33% 4%;
-    --foreground: 0 0% 98%;
-    --card: 240 25% 6%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 25% 6%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 276 100% 58%;
+    /* Premium black/red system */
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
+    --card: 0 0% 13%;
+    --card-foreground: 0 0% 100%;
+    --popover: 0 0% 9%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 4 100% 59%; /* #FF3B30 */
     --primary-foreground: 0 0% 100%;
-    --secondary: 240 15% 12%;
+    --secondary: 0 0% 9%;
     --secondary-foreground: 0 0% 90%;
-    --muted: 240 15% 12%;
-    --muted-foreground: 240 10% 60%;
-    --accent: 190 100% 50%;
+    --muted: 0 0% 12%;
+    --muted-foreground: 240 4% 65%;
+    --accent: 6 100% 65%; /* #FF5A4A */
     --accent-foreground: 0 0% 100%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 10% 15%;
-    --input: 240 10% 15%;
-    --ring: 276 100% 58%;
+    --border: 0 0% 100% / 0.08;
+    --input: 0 0% 100% / 0.08;
+    --ring: 4 100% 59%;
     --radius: 0.75rem;
     /* Ripple color for the pricing page's RippleButton (dark theme default). */
     --button-ripple-color: rgba(255, 255, 255, 0.35);
@@ -44,11 +45,11 @@
     color-scheme: dark;
   }
   select option {
-    background-color: #101018;
+    background-color: #181818;
     color: #fff;
   }
   ::selection {
-    background: rgba(176, 38, 255, 0.3);
+    background: rgba(255, 59, 48, 0.35);
     color: #fff;
   }
 }
@@ -60,14 +61,15 @@
   .glass-strong {
     @apply bg-white/[0.06] backdrop-blur-2xl border border-white/[0.12] rounded-2xl;
   }
+  /* Class names are legacy; values follow the premium red/green system. */
   .glow-purple {
-    box-shadow: 0 0 30px rgba(176, 38, 255, 0.15), 0 0 60px rgba(176, 38, 255, 0.05);
+    box-shadow: 0 0 30px rgba(255, 59, 48, 0.18), 0 8px 40px rgba(0, 0, 0, 0.6);
   }
   .glow-blue {
-    box-shadow: 0 0 30px rgba(0, 212, 255, 0.15), 0 0 60px rgba(0, 212, 255, 0.05);
+    box-shadow: 0 0 30px rgba(255, 255, 255, 0.06), 0 8px 40px rgba(0, 0, 0, 0.6);
   }
   .glow-lime {
-    box-shadow: 0 0 30px rgba(204, 255, 0, 0.15), 0 0 60px rgba(204, 255, 0, 0.05);
+    box-shadow: 0 0 30px rgba(34, 197, 94, 0.15), 0 8px 40px rgba(0, 0, 0, 0.6);
   }
   .text-gradient {
     @apply bg-gradient-wed bg-clip-text text-transparent;
@@ -80,17 +82,17 @@
   }
   .btn-glow {
     @apply relative overflow-hidden;
-    box-shadow: 0 0 20px rgba(176, 38, 255, 0.3), inset 0 0 20px rgba(176, 38, 255, 0.1);
+    box-shadow: 0 0 20px rgba(255, 59, 48, 0.35), inset 0 0 20px rgba(255, 59, 48, 0.08);
   }
   .btn-glow:hover {
-    box-shadow: 0 0 40px rgba(176, 38, 255, 0.5), inset 0 0 30px rgba(176, 38, 255, 0.15);
+    box-shadow: 0 0 40px rgba(255, 59, 48, 0.55), inset 0 0 30px rgba(255, 59, 48, 0.12);
   }
   .card-hover {
     @apply transition-all duration-300 ease-out;
   }
   .card-hover:hover {
     @apply scale-[1.02] border-wed-purple/30;
-    box-shadow: 0 0 40px rgba(176, 38, 255, 0.15);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), 0 0 30px rgba(255, 59, 48, 0.1);
   }
   .section-padding {
     @apply py-20 md:py-32 px-4 sm:px-6 lg:px-8;

@@ -12,24 +12,24 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'WEDXUI Fit — Become the Main Character',
-  description: 'A futuristic, AI-powered fitness platform. Train like the main character of your story. Built for warriors who refuse to settle.',
-  keywords: ['fitness', 'AI coach', 'workout', 'gym', 'calisthenics', 'health', 'gamification', 'Gen Z'],
-  authors: [{ name: 'WEDXUI Fit' }],
-  creator: 'WEDXUI Fit',
+  title: 'WEDXUI FIT — AI-Powered Fitness Intelligence',
+  description: 'Training and nutrition engineered for you. WEDXUI FIT reasons through your physique goal, equipment, recovery, and lifestyle — then explains every decision it makes.',
+  keywords: ['fitness', 'AI coach', 'workout', 'gym', 'calisthenics', 'nutrition', 'training plan', 'health'],
+  authors: [{ name: 'WEDXUI FIT' }],
+  creator: 'WEDXUI FIT',
   openGraph: {
     type: 'website',
     locale: 'en_US',
     url: 'https://wedxui.fit',
-    siteName: 'WEDXUI Fit',
-    title: 'WEDXUI Fit — Become the Main Character',
-    description: 'Every rep writes your legend. Every set levels you up.',
+    siteName: 'WEDXUI FIT',
+    title: 'WEDXUI FIT — AI-Powered Fitness Intelligence',
+    description: 'Every exercise chosen for a reason. Every plan built for you.',
     images: ['/og-image.png'],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'WEDXUI Fit',
-    description: 'The fitness platform for Gen Z warriors.',
+    title: 'WEDXUI FIT',
+    description: 'AI-powered training and nutrition that explains itself.',
     images: ['/og-image.png'],
   },
   robots: {

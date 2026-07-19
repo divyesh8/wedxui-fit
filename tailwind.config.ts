@@ -50,25 +50,27 @@ const config: Config = {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
-        // WEDXUI custom palette
+        // WEDXUI premium palette — token NAMES are legacy (purple/lime/blue…),
+        // values are the black/red luxury system. Renaming the keys would mean
+        // touching every component; remapping values recolors the app globally.
         wed: {
-          black: '#0a0a0f',
-          surface: '#111118',
-          purple: '#b026ff',
-          blue: '#00d4ff',
-          lime: '#ccff00',
-          pink: '#ff2a6d',
-          orange: '#ff9e00',
+          black: '#000000',
+          surface: '#181818',
+          purple: '#FF3B30', // accent
+          blue: '#A1A1AA', // neutral secondary (was neon blue)
+          lime: '#22C55E', // success
+          pink: '#FF5A4A', // accent hover / warm coral
+          orange: '#F59E0B', // warning
           gray: {
-            100: '#f0f0f5',
-            200: '#c0c0cf',
-            300: '#9090a0',
-            400: '#606070',
-            500: '#404050',
-            600: '#2a2a3a',
-            700: '#1a1a25',
-            800: '#111118',
-            900: '#0a0a0f',
+            100: '#F5F5F5',
+            200: '#D4D4D8',
+            300: '#A1A1AA',
+            400: '#71717A',
+            500: '#52525B',
+            600: '#3F3F46',
+            700: '#222222', // card
+            800: '#181818', // surface
+            900: '#111111',
           },
         },
       },
@@ -99,8 +101,8 @@ const config: Config = {
           '50%': { transform: 'translateY(-10px)' },
         },
         'pulse-glow': {
-          '0%, 100%': { boxShadow: '0 0 20px rgba(176, 38, 255, 0.3)' },
-          '50%': { boxShadow: '0 0 40px rgba(176, 38, 255, 0.6)' },
+          '0%, 100%': { boxShadow: '0 0 20px rgba(255, 59, 48, 0.3)' },
+          '50%': { boxShadow: '0 0 40px rgba(255, 59, 48, 0.6)' },
         },
         'slide-up': {
           from: { opacity: '0', transform: 'translateY(30px)' },
@@ -128,9 +130,9 @@ const config: Config = {
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
         'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
-        'gradient-wed': 'linear-gradient(135deg, #b026ff 0%, #00d4ff 50%, #ccff00 100%)',
-        'gradient-purple': 'linear-gradient(135deg, #b026ff 0%, #7c3aed 100%)',
-        'gradient-blue': 'linear-gradient(135deg, #00d4ff 0%, #3b82f6 100%)',
+        'gradient-wed': 'linear-gradient(135deg, #FF3B30 0%, #FF5A4A 60%, #F59E0B 100%)',
+        'gradient-purple': 'linear-gradient(135deg, #FF3B30 0%, #C2261C 100%)',
+        'gradient-blue': 'linear-gradient(135deg, #F5F5F5 0%, #A1A1AA 100%)',
       },
     },
   },
