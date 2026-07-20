@@ -18,13 +18,22 @@ export function Footer() {
               AI-powered training and nutrition that explains every decision it makes. Built for people who want to know why.
             </p>
             <div className="flex gap-3 mt-4">
-              {[Twitter, Instagram, Youtube, Github].map((Icon, i) => (
+              {/* aria-label gives each icon-only link a discernible name for
+                  screen readers (Lighthouse "link-name"). Swap href="#" for the
+                  real profile URLs once those accounts exist. */}
+              {([
+                [Twitter, 'Twitter'],
+                [Instagram, 'Instagram'],
+                [Youtube, 'YouTube'],
+                [Github, 'GitHub'],
+              ] as const).map(([Icon, label]) => (
                 <a
-                  key={i}
+                  key={label}
                   href="#"
+                  aria-label={`WEDXUI FIT on ${label}`}
                   className="w-9 h-9 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-wed-gray-400 hover:text-white hover:border-wed-purple/30 transition-all"
                 >
-                  <Icon className="w-4 h-4" />
+                  <Icon className="w-4 h-4" aria-hidden />
                 </a>
               ))}
             </div>
@@ -32,7 +41,7 @@ export function Footer() {
 
           {/* Navigate */}
           <div>
-            <h4 className="text-sm font-semibold text-white mb-4 uppercase tracking-wide">Navigate</h4>
+            <h3 className="text-sm font-semibold text-white mb-4 uppercase tracking-wide">Navigate</h3>
             <ul className="space-y-2">
               {['Workouts', 'Exercises', 'Challenges', 'Tools', 'Progress'].map((item) => (
                 <li key={item}>
@@ -46,7 +55,7 @@ export function Footer() {
 
           {/* Resources */}
           <div>
-            <h4 className="text-sm font-semibold text-white mb-4 uppercase tracking-wide">Resources</h4>
+            <h3 className="text-sm font-semibold text-white mb-4 uppercase tracking-wide">Resources</h3>
             <ul className="space-y-2">
               {['Blog', 'Guides', 'Nutrition', 'Recovery', 'Mobility'].map((item) => (
                 <li key={item}>
@@ -60,7 +69,7 @@ export function Footer() {
 
           {/* Legal */}
           <div>
-            <h4 className="text-sm font-semibold text-white mb-4 uppercase tracking-wide">Legal</h4>
+            <h3 className="text-sm font-semibold text-white mb-4 uppercase tracking-wide">Legal</h3>
             <ul className="space-y-2">
               {['Privacy Policy', 'Terms of Service', 'Disclaimer', 'Cookie Policy'].map((item) => (
                 <li key={item}>
