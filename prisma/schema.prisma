@@ -130,6 +130,17 @@ model User {
   notifications  Notification[]
   aiReviews      AiReview[]
 
+  // Settings domains
+  privacySettings      PrivacySettings?
+  notificationSettings NotificationSettings?
+  workoutSettings      WorkoutSettings?
+  dietSettings         DietSettings?
+  aiSettings           AiSettings?
+  appearanceSettings   AppearanceSettings?
+  securitySettings     SecuritySettings?
+  activityLogs         ActivityLog[]
+  deleteRequest        DeleteAccountRequest?
+
   @@map("users")
 }
 
@@ -253,10 +264,195 @@ model UserSettings {
   workoutReminders   Boolean @default(true)
   privacyProfile     String  @default("public") // public, friends, private
 
+  // Locale / account preferences
+  timezone        String   @default("UTC")
+  country         String?
+
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
   @@map("user_settings")
+}
+
+// ─── SETTINGS DOMAINS ──────────────────────────────────
+// One row per user per domain. Defaults are conservative (sharing off by
+// default). Every field below is read by real app logic — nothing decorative.
+
+model PrivacySettings {
+  id      String @id @default(cuid())
+  userId  String @unique
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  profileVisibility  String  @default("private") // public | followers | private
+  showWeight         Boolean @default(false)
+  showProgressPhotos Boolean @default(false)
+  showWorkoutHistory Boolean @default(false)
+  showStreak         Boolean @default(true)
+  showAchievements   Boolean @default(true)
+  allowProfileSearch Boolean @default(false)
+  // AI data usage
+  personalizedAi     Boolean @default(true)
+  anonymousAnalytics Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("privacy_settings")
+}
+
+model NotificationSettings {
+  id      String @id @default(cuid())
+  userId  String @unique
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  workoutReminder   Boolean @default(true)
+  mealReminder      Boolean @default(false)
+  waterReminder     Boolean @default(false)
+  weeklyReport      Boolean @default(true)
+  monthlyReport     Boolean @default(false)
+  achievementAlerts Boolean @default(true)
+  newFeatures       Boolean @default(true)
+  marketingEmails   Boolean @default(false)
+  // Quiet hours, stored as "HH:MM" 24h strings
+  quietStart        String  @default("22:00")
+  quietEnd          String  @default("07:00")
+  muteAll           Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("notification_settings")
+}
+
+model WorkoutSettings {
+  id      String @id @default(cuid())
+  userId  String @unique
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  preferredDuration  Int      @default(60) // minutes: 15|30|45|60|90|120
+  difficulty         String   @default("INTERMEDIATE")
+  trainingDays       String[] @default([]) // ["MON","WED","FRI"]
+  autoProgression    Boolean  @default(true)
+  restTimerSec       Int      @default(90)
+  defaultEquipment   String[] @default([])
+  warmupEnabled      Boolean  @default(true)
+  cooldownEnabled    Boolean  @default(true)
+  audioCues          Boolean  @default(true)
+  autoStartRestTimer Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("workout_settings")
+}
+
+model DietSettings {
+  id      String @id @default(cuid())
+  userId  String @unique
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  dietType          String  @default("BALANCED")
+  allergies         String  @default("") @db.Text
+  cuisinePreference String  @default("") @db.Text
+  waterGoalMl       Int     @default(2500)
+  proteinGoalG      Int?
+  calorieGoal       Int?
+  mealsPerDay       Int     @default(3)
+  fastingWindow     String? // e.g. "16:8", null = none
+  supplements       String  @default("") @db.Text
+  budgetTier        String  @default("moderate") // budget | moderate | premium
+  aiMealPlanning    Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("diet_settings")
+}
+
+model AiSettings {
+  id      String @id @default(cuid())
+  userId  String @unique
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  personality         String  @default("professional")
+  communicationStyle  String  @default("short") // short | detailed | scientific
+  motivationFrequency String  @default("medium")
+  weeklyCheckins      Boolean @default(true)
+  dailyCheckins       Boolean @default(false)
+  adaptiveWorkouts    Boolean @default(true)
+  adaptiveDiet        Boolean @default(true)
+  rememberPreferences Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("ai_settings")
+}
+
+model AppearanceSettings {
+  id      String @id @default(cuid())
+  userId  String @unique
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  theme           String  @default("dark") // dark | light | system
+  accentColor     String  @default("red")
+  glassIntensity  String  @default("medium")
+  fontSize        String  @default("medium")
+  compactMode     Boolean @default(false)
+  animations      Boolean @default(true)
+  reduceMotion    Boolean @default(false)
+  roundedCorners  String  @default("medium")
+  dashboardLayout String  @default("large") // large | compact
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("appearance_settings")
+}
+
+model SecuritySettings {
+  id      String @id @default(cuid())
+  userId  String @unique
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  twoFactorEnabled   Boolean   @default(false)
+  // AES-256-GCM ciphertext — never the plaintext TOTP secret.
+  totpSecret         String?   @db.Text
+  // bcrypt hashes of single-use recovery codes — never the codes themselves.
+  recoveryCodes      String[]  @default([])
+  lastPasswordChange DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("security_settings")
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  action    String   // PASSWORD_CHANGED | SETTINGS_UPDATED | DEVICE_REVOKED | ...
+  detail    String?  @db.Text
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@map("activity_logs")
+}
+
+model DeleteAccountRequest {
+  id           String    @id @default(cuid())
+  userId       String    @unique
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  requestedAt  DateTime  @default(now())
+  scheduledFor DateTime  // requestedAt + 30 days
+  cancelledAt  DateTime?
+
+  @@map("delete_account_requests")
 }
 
 // ─── EXERCISE LIBRARY ──────────────────────────────────
