@@ -1,9 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store';
+import { physiqueById } from '@/data/knowledge/physiques';
+import { goalProfiles, type GoalId } from '@/data/knowledge/volume-landmarks';
+import { PHYSIQUE_ART } from '@/components/onboarding/physique-art';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard,
@@ -39,6 +42,23 @@ export function DashboardSidebar({ mobileOpen, setMobileOpen }: { mobileOpen: bo
   const router = useRouter();
   const logout = useAuthStore((s) => s.logout);
   const [collapsed, setCollapsed] = useState(false);
+  // The physique the user actually chose in onboarding — never a placeholder.
+  const [target, setTarget] = useState<{ physique: string; goal: string | null } | null>(null);
+
+  useEffect(() => {
+    fetch('/api/profile')
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.profile?.physique) {
+          setTarget({ physique: d.profile.physique, goal: d.profile.goalsRanked?.[0] ?? null });
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const physique = target ? physiqueById(target.physique) : undefined;
+  const PhysiqueArt = physique ? PHYSIQUE_ART[physique.silhouette] : undefined;
+  const goalLabel = target?.goal ? goalProfiles[target.goal as GoalId]?.label : undefined;
 
   const handleLogout = async () => {
     await logout();
@@ -115,6 +135,40 @@ export function DashboardSidebar({ mobileOpen, setMobileOpen }: { mobileOpen: bo
             );
           })}
         </nav>
+
+        {/* Target physique — fills the sidebar gap with the user's real goal.
+            Hidden when collapsed, and omitted entirely before onboarding. */}
+        {physique && !collapsed && (
+          <div className="px-3 pb-3">
+            <Link
+              href="/onboarding"
+              onClick={() => setMobileOpen(false)}
+              className="block rounded-2xl border border-white/10 bg-white/[0.03] p-3 hover:border-wed-purple/30 hover:bg-white/[0.06] transition-all group"
+            >
+              <p className="text-[10px] uppercase tracking-[0.18em] text-wed-gray-500 mb-2">
+                Target physique
+              </p>
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-14 flex-shrink-0">
+                  {PhysiqueArt && <PhysiqueArt color="#FF3B30" />}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-white leading-tight truncate group-hover:text-wed-purple transition-colors">
+                    {physique.name}
+                  </p>
+                  {goalLabel && (
+                    <p className="text-[11px] text-wed-gray-400 truncate mt-0.5">{goalLabel}</p>
+                  )}
+                  <p className="text-[10px] text-wed-gray-500 mt-1">
+                    {'★'.repeat(physique.difficulty)}
+                    <span className="text-wed-gray-700">{'★'.repeat(5 - physique.difficulty)}</span>
+                    <span className="ml-1.5">{physique.estimatedYears}</span>
+                  </p>
+                </div>
+              </div>
+            </Link>
+          </div>
+        )}
 
         {/* Bottom */}
         <div className="p-3 border-t border-white/5 space-y-1">
