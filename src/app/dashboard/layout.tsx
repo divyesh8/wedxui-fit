@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { DashboardSidebar } from '@/components/layout/dashboard-sidebar';
 import { DashboardHeader } from '@/components/layout/dashboard-header';
+import { MobileTabBar } from '@/components/layout/mobile-tab-bar';
 import { useAuthStore } from '@/store';
 
 export default function DashboardLayout({
@@ -30,10 +31,12 @@ export default function DashboardLayout({
       <DashboardSidebar mobileOpen={sidebarOpen} setMobileOpen={setSidebarOpen} />
       <div className="lg:ml-64 transition-all duration-300">
         <DashboardHeader onMenuClick={() => setSidebarOpen(true)} />
-        <main className="p-4 lg:p-6">
+        {/* pb-28 clears the fixed mobile tab bar; lg reverts to normal padding. */}
+        <main className="p-4 pb-28 lg:p-6 lg:pb-6">
           {children}
         </main>
       </div>
+      <MobileTabBar />
     </div>
   );
 }

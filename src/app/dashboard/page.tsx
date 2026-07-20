@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { Flame, Dumbbell, Calendar, Zap, Trophy, Target, Sparkles, ArrowRight, Droplets, Quote } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { ProgressRing } from '@/components/ui/progress-ring';
 import { getRandomQuote, type AnimeQuote } from '@/data/quotes';
 import { calculateXPForLevel, getRankFromLevel } from '@/lib/utils';
 import type { WorkoutPlan } from '@/types';
@@ -35,6 +36,7 @@ export default function DashboardPage() {
   const [targets, setTargets] = useState<{ calories: number; waterMl: number } | null>(null);
   const [nextDayIndex, setNextDayIndex] = useState(0);
   const [onboarded, setOnboarded] = useState(false);
+  const [sessionsThisWeek, setSessionsThisWeek] = useState(0);
 
   useEffect(() => {
     setMounted(true);
@@ -57,6 +59,22 @@ export default function DashboardPage() {
         setPlan(data.plan);
         setTargets(data.targets);
         setNextDayIndex(data.nextDayIndex);
+      })
+      .catch(() => {});
+
+    // Weekly adherence comes from real completed sessions since Monday.
+    fetch('/api/workouts/history')
+      .then((res) => res.json())
+      .then((data) => {
+        const now = new Date();
+        const monday = new Date(now);
+        const dow = now.getDay() === 0 ? 6 : now.getDay() - 1;
+        monday.setDate(now.getDate() - dow);
+        monday.setHours(0, 0, 0, 0);
+        const count = (data.history ?? []).filter(
+          (h: { completedAt: string }) => new Date(h.completedAt) >= monday
+        ).length;
+        setSessionsThisWeek(count);
       })
       .catch(() => {});
   }, []);
@@ -158,6 +176,39 @@ export default function DashboardPage() {
             </div>
             <ArrowRight className="w-5 h-5 text-wed-purple group-hover:translate-x-1 transition-transform" />
           </Link>
+        </motion.div>
+      )}
+
+      {/* Progress rings — every value is real logged data, never estimated. */}
+      {mounted && onboarded && (
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.12 }}>
+          <Card>
+            <CardContent className="p-5">
+              <div className="grid grid-cols-3 gap-2">
+                <ProgressRing
+                  value={xp}
+                  max={xpForNext}
+                  label={`Level ${level} → ${level + 1}`}
+                  sublabel={`/ ${xpForNext} XP`}
+                  color="#FF3B30"
+                />
+                <ProgressRing
+                  value={sessionsThisWeek}
+                  max={plan?.days.length ?? 0}
+                  label="This week"
+                  sublabel={plan ? `/ ${plan.days.length} planned` : undefined}
+                  color="#22C55E"
+                />
+                <ProgressRing
+                  value={profile?.streakDays ?? 0}
+                  max={Math.max(7, profile?.streakDays ?? 0)}
+                  label="Day streak"
+                  sublabel="best 7d view"
+                  color="#F59E0B"
+                />
+              </div>
+            </CardContent>
+          </Card>
         </motion.div>
       )}
 

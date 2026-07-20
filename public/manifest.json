@@ -1,0 +1,38 @@
+{
+  "name": "WEDXUI FIT — AI Fitness Intelligence",
+  "short_name": "WEDXUI FIT",
+  "description": "AI-powered training and nutrition that explains every recommendation.",
+  "start_url": "/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "categories": ["health", "fitness", "lifestyle"],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Today's Workout",
+      "url": "/dashboard/workouts",
+      "description": "Jump straight into your session"
+    },
+    {
+      "name": "Diet Plan",
+      "url": "/dashboard/diet",
+      "description": "Meals, macros, and hydration"
+    }
+  ]
+}

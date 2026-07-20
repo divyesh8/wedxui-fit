@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="112" fill="#000000"/>
+  <!-- Original WEDXUI mark: an angular "W" cut like a barbell path -->
+  <path d="M96 156 L152 156 L196 300 L240 156 L272 156 L316 300 L360 156 L416 156 L344 372 L292 372 L256 254 L220 372 L168 372 Z"
+        fill="#FF3B30"/>
+  <rect x="96" y="404" width="320" height="16" rx="8" fill="#FFFFFF" opacity="0.18"/>
+</svg>

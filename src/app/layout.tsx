@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '@/components/providers/theme-provider';
@@ -45,9 +45,23 @@ export const metadata: Metadata = {
   },
   manifest: '/manifest.json',
   icons: {
-    icon: '/favicon.ico',
-    apple: '/apple-touch-icon.png',
+    icon: '/icon.svg',
+    apple: '/icon.svg',
   },
+  appleWebApp: {
+    capable: true,
+    title: 'WEDXUI FIT',
+    statusBarStyle: 'black-translucent',
+  },
+};
+
+// Separate export per Next 14. viewportFit:'cover' is what lets the app draw
+// into the notch/home-indicator area so env(safe-area-inset-*) has an effect.
+export const viewport: Viewport = {
+  themeColor: '#000000',
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({
