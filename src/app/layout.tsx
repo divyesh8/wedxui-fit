@@ -4,6 +4,7 @@ import './globals.css';
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import { QueryProvider } from '@/components/providers/query-provider';
 import { Toaster } from '@/components/ui/toaster';
+import { ServiceWorkerRegistrar } from '@/components/providers/sw-register';
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -81,6 +82,7 @@ export default function RootLayout({
           <QueryProvider>
             {children}
             <Toaster />
+            <ServiceWorkerRegistrar />
           </QueryProvider>
         </ThemeProvider>
       </body>
