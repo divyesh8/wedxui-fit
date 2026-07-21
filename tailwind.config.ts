@@ -56,7 +56,10 @@ const config: Config = {
         wed: {
           black: '#000000',
           surface: '#181818',
-          purple: '#FF3B30', // accent
+          // Accent is a CSS variable (channel form, so `/opacity` modifiers still
+          // work) rather than a literal, which is what lets AppearanceSettings
+          // recolour every existing `wed-purple` usage live. Default in globals.css.
+          purple: 'rgb(var(--wed-accent-rgb) / <alpha-value>)', // accent — #FF3B30 by default
           blue: '#A1A1AA', // neutral secondary (was neon blue)
           lime: '#22C55E', // success
           pink: '#FF5A4A', // accent hover / warm coral

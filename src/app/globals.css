@@ -27,6 +27,48 @@
     --radius: 0.75rem;
     /* Ripple color for the pricing page's RippleButton (dark theme default). */
     --button-ripple-color: rgba(255, 255, 255, 0.35);
+
+    /* ── Appearance settings ──────────────────────────────
+       Written at runtime by AppearanceProvider from AppearanceSettings.
+       Channel form (no rgb() wrapper) so Tailwind's `/opacity` modifiers work
+       on the `wed-purple` token. These values are the shipped defaults. */
+    --wed-accent-rgb: 255 59 48; /* #FF3B30 */
+    --wed-font-scale: 1;
+    --wed-density: 1;
+    --wed-glass-blur: 16px;
+    --wed-corner: 0.75rem;
+  }
+
+  /* Font size setting. Scales the root, so every rem-based size follows. */
+  html {
+    font-size: calc(100% * var(--wed-font-scale));
+  }
+
+  /* Compact mode multiplies the dashboard's vertical rhythm. */
+  [data-density='compact'] {
+    --wed-density: 0.75;
+  }
+
+  /* Motion setting. Honours the OS preference too — a user who has asked the
+     system for less motion gets it whether or not they found this setting. */
+  [data-reduce-motion='true'] *,
+  [data-reduce-motion='true'] *::before,
+  [data-reduce-motion='true'] *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
 

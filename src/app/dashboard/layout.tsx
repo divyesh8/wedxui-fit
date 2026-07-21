@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { DashboardSidebar } from '@/components/layout/dashboard-sidebar';
 import { DashboardHeader } from '@/components/layout/dashboard-header';
 import { MobileTabBar } from '@/components/layout/mobile-tab-bar';
+import { AppearanceProvider } from '@/components/providers/appearance-provider';
 import { useAuthStore } from '@/store';
 
 export default function DashboardLayout({
@@ -28,6 +29,7 @@ export default function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-wed-black">
+      <AppearanceProvider />
       <DashboardSidebar mobileOpen={sidebarOpen} setMobileOpen={setSidebarOpen} />
       <div className="lg:ml-64 transition-all duration-300">
         <DashboardHeader onMenuClick={() => setSidebarOpen(true)} />
