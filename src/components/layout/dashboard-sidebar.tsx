@@ -173,9 +173,10 @@ export function DashboardSidebar({ mobileOpen, setMobileOpen }: { mobileOpen: bo
         {/* Bottom */}
         <div className="p-3 border-t border-white/5 space-y-1">
           <Link
-            href="#"
+            href="/dashboard/settings"
             className={cn(
               'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-wed-gray-400 hover:text-white hover:bg-white/5 transition-all',
+              pathname === '/dashboard/settings' && 'bg-wed-purple/15 text-wed-purple border border-wed-purple/20',
               collapsed && 'justify-center'
             )}
           >

@@ -5,6 +5,7 @@ import { aiOnboardingSchema } from '@/lib/validations/ai-onboarding';
 import { buildAthleteProfile, experienceToDbLevel } from '@/lib/ai/athlete-profile';
 import { generateIntelligentPlan } from '@/lib/ai/workout-engine';
 import { generateNutritionPlan, goalToLegacy } from '@/lib/ai/nutrition-engine';
+import { getDietSettings, getWorkoutSettings } from '@/lib/settings/service';
 import type { AiOnboardingInput, AthleteProfile } from '@/lib/ai/types';
 import type { Prisma, UserProfile } from '@prisma/client';
 
@@ -94,8 +95,33 @@ export async function POST(req: Request) {
     input = parsed.data as AiOnboardingInput;
   }
 
+  // Overlay domain Workout & Diet settings onto input
+  const [wSettings, dSettings] = await Promise.all([
+    getWorkoutSettings(sessionUser.id),
+    getDietSettings(sessionUser.id),
+  ]);
+
+  if (wSettings.preferredDuration) input.sessionMinutes = wSettings.preferredDuration;
+  if (wSettings.trainingDays && wSettings.trainingDays.length > 0) input.daysPerWeek = wSettings.trainingDays.length;
+  if (wSettings.defaultEquipment && wSettings.defaultEquipment.length > 0) input.equipmentCards = wSettings.defaultEquipment;
+  if (wSettings.difficulty) {
+    const diffMap: Record<string, AiOnboardingInput['experienceTier']> = {
+      BEGINNER: 'BEGINNER',
+      INTERMEDIATE: 'INTERMEDIATE',
+      ADVANCED: 'ADVANCED',
+      EXPERT: 'ADVANCED',
+    };
+    input.experienceTier = diffMap[wSettings.difficulty] || 'INTERMEDIATE';
+  }
+
+  if (dSettings.allergies !== undefined) input.allergies = dSettings.allergies;
+  if (dSettings.mealsPerDay) input.mealsPerDay = dSettings.mealsPerDay;
+
   // Deterministic pipeline: profile → workout plan → nutrition plan.
   const athleteProfile = buildAthleteProfile(input);
+  if (dSettings.budgetTier) {
+    athleteProfile.budgetTier = dSettings.budgetTier as 'budget' | 'moderate' | 'premium';
+  }
   const aiPlan = { ...generateIntelligentPlan(athleteProfile), generatedAt: new Date().toISOString() };
   const aiNutritionPlan = generateNutritionPlan(input, athleteProfile);
 

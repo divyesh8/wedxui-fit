@@ -84,6 +84,8 @@ export default function WorkoutsPage() {
       .catch(() => {});
   };
 
+  const [workoutSettings, setWorkoutSettings] = useState<{ restTimerSec: number; autoStartRestTimer: boolean } | null>(null);
+
   useEffect(() => {
     loadToday();
     loadHistory();
@@ -91,6 +93,17 @@ export default function WorkoutsPage() {
     fetch('/api/ai/plan')
       .then((r) => r.json())
       .then((d) => setAiPlan(d.aiPlan ?? null))
+      .catch(() => {});
+    fetch('/api/settings')
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.settings?.workout) {
+          setWorkoutSettings({
+            restTimerSec: d.settings.workout.restTimerSec,
+            autoStartRestTimer: d.settings.workout.autoStartRestTimer,
+          });
+        }
+      })
       .catch(() => {});
   }, []);
 
@@ -150,7 +163,11 @@ export default function WorkoutsPage() {
       loadHistory();
     } else {
       setSession((s) => (s ? { ...s, exercises: s.exercises.map((e) => (e.id === logId ? { ...e, completedAt: new Date().toISOString() } : e)) } : s));
-      restTimer.start(restSeconds);
+      const effectiveRest = workoutSettings?.restTimerSec ?? restSeconds;
+      const autoStart = workoutSettings?.autoStartRestTimer ?? true;
+      if (autoStart) {
+        restTimer.start(effectiveRest);
+      }
     }
   };
 

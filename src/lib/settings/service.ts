@@ -147,11 +147,16 @@ export interface SettingsBundle {
   ai: AiSettingsInput;
   appearance: AppearanceSettingsInput;
   account: { timezone: string };
+  security: {
+    twoFactorEnabled: boolean;
+    recoveryCodeCount: number;
+    lastPasswordChange: Date | null;
+  };
 }
 
 /** Every domain in one round trip — what GET /api/settings returns. */
 export async function getSettingsBundle(userId: string): Promise<SettingsBundle> {
-  const [privacy, notifications, workout, diet, ai, appearance, account] = await Promise.all([
+  const [privacy, notifications, workout, diet, ai, appearance, account, security] = await Promise.all([
     prisma.privacySettings.findUnique({ where: { userId } }),
     prisma.notificationSettings.findUnique({ where: { userId } }),
     prisma.workoutSettings.findUnique({ where: { userId } }),
@@ -159,6 +164,7 @@ export async function getSettingsBundle(userId: string): Promise<SettingsBundle>
     prisma.aiSettings.findUnique({ where: { userId } }),
     prisma.appearanceSettings.findUnique({ where: { userId } }),
     prisma.userSettings.findUnique({ where: { userId }, select: { timezone: true } }),
+    prisma.securitySettings.findUnique({ where: { userId } }),
   ]);
 
   return {
@@ -175,6 +181,11 @@ export async function getSettingsBundle(userId: string): Promise<SettingsBundle>
       ...(clean(appearance) ?? {}),
     } as AppearanceSettingsInput,
     account: { timezone: account?.timezone || 'UTC' },
+    security: {
+      twoFactorEnabled: security?.twoFactorEnabled ?? false,
+      recoveryCodeCount: security?.recoveryCodes?.length ?? 0,
+      lastPasswordChange: security?.lastPasswordChange ?? null,
+    },
   };
 }
 

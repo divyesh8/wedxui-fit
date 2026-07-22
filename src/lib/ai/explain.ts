@@ -56,13 +56,43 @@ const TEMPLATES: Record<string, Renderer> = {
     `Supplement suggestions match your ${i.tier} food budget${i.vegan === 'true' ? ' and plant-based preference' : ''} — nothing you don't need.`,
 };
 
-export function renderReasoning(r: Reasoning): string {
-  const template = TEMPLATES[r.rule];
-  if (template) return template(r.inputs);
-  // Unknown rule: degrade gracefully rather than hiding the trace.
-  return `${r.rule}: ${Object.entries(r.inputs).map(([k, v]) => `${k}=${v}`).join(', ')}`;
+export interface ExplainOptions {
+  style?: 'short' | 'detailed' | 'scientific';
+  personality?: 'professional' | 'friendly' | 'tough-love' | 'analytical';
 }
 
-export function renderAll(reasoning: Reasoning[]): string[] {
-  return reasoning.map(renderReasoning);
+export function renderReasoning(r: Reasoning, options?: ExplainOptions): string {
+  const template = TEMPLATES[r.rule];
+  let text = template ? template(r.inputs) : `${r.rule}: ${Object.entries(r.inputs).map(([k, v]) => `${k}=${v}`).join(', ')}`;
+
+  const style = options?.style ?? 'short';
+  const personality = options?.personality ?? 'professional';
+
+  // Apply style variations deterministically
+  if (style === 'short') {
+    // Truncate at first dash or sentence boundary if too long
+    if (text.includes(' — ')) {
+      text = text.split(' — ')[0];
+    }
+  } else if (style === 'scientific') {
+    text = text.replace(/recovery/gi, 'autonomic recovery capacity')
+      .replace(/sets/gi, 'adaptive stimulus sets')
+      .replace(/reps/gi, 'repetition continuum')
+      .replace(/muscle/gi, 'hypertrophic tissue');
+  }
+
+  // Apply personality variations deterministically
+  if (personality === 'tough-love') {
+    text = `${text} Push through.`;
+  } else if (personality === 'friendly') {
+    text = `✨ ${text}`;
+  } else if (personality === 'analytical') {
+    text = `[Data: ${r.rule}] ${text}`;
+  }
+
+  return text;
+}
+
+export function renderAll(reasoning: Reasoning[], options?: ExplainOptions): string[] {
+  return reasoning.map((r) => renderReasoning(r, options));
 }

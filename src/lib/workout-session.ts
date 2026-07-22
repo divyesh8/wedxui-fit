@@ -61,28 +61,39 @@ export function xpForWorkout(exerciseCount: number): number {
   return 50 + exerciseCount * 10;
 }
 
-function startOfDayUTC(d: Date): number {
-  return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
-}
+import { localDateKey } from '@/lib/settings/service';
 
 /**
  * Streak rule: 1-day gap from the previous completed workout continues the
  * streak, a 0-day gap (second workout same day) leaves it unchanged, any
  * larger gap (or no prior workout) resets it to 1.
+ * Evaluated in the user's local timezone.
  */
 export function applyStreakRule(
   current: { streakDays: number; bestStreak: number },
   previousCompletedAt: Date | null,
-  now: Date
+  now: Date,
+  timezone = 'UTC'
 ): { streakDays: number; bestStreak: number } {
   let streakDays: number;
   if (!previousCompletedAt) {
     streakDays = 1;
   } else {
-    const gapDays = Math.round((startOfDayUTC(now) - startOfDayUTC(previousCompletedAt)) / 86_400_000);
-    if (gapDays === 1) streakDays = current.streakDays + 1;
-    else if (gapDays === 0) streakDays = current.streakDays;
-    else streakDays = 1;
+    const todayKey = localDateKey(now, timezone);
+    const prevKey = localDateKey(previousCompletedAt, timezone);
+
+    if (todayKey === prevKey) {
+      streakDays = current.streakDays;
+    } else {
+      const [tY, tM, tD] = todayKey.split('-').map(Number);
+      const [pY, pM, pD] = prevKey.split('-').map(Number);
+      const todayMs = Date.UTC(tY, tM - 1, tD);
+      const prevMs = Date.UTC(pY, pM - 1, pD);
+      const gapDays = Math.round((todayMs - prevMs) / 86_400_000);
+
+      if (gapDays === 1) streakDays = current.streakDays + 1;
+      else streakDays = 1;
+    }
   }
   return { streakDays, bestStreak: Math.max(current.bestStreak, streakDays) };
 }

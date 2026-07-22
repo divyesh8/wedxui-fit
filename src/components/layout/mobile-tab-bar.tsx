@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Home, Dumbbell, Salad, LineChart, User } from 'lucide-react';
+import { Home, Dumbbell, Salad, LineChart, User, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 /**
@@ -17,6 +17,7 @@ const TABS = [
   { href: '/dashboard/diet', label: 'Diet', icon: Salad },
   { href: '/dashboard/progress', label: 'Progress', icon: LineChart },
   { href: '/dashboard/profile', label: 'Profile', icon: User },
+  { href: '/dashboard/settings', label: 'Settings', icon: Settings },
 ];
 
 export function MobileTabBar() {

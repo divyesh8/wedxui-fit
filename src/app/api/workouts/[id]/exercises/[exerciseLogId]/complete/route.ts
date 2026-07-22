@@ -4,6 +4,8 @@ import { getSessionUser } from '@/lib/auth/session';
 import { xpForWorkout, applyStreakRule } from '@/lib/workout-session';
 import { calculateLevelFromXP } from '@/lib/utils';
 
+import { getUserTimezone } from '@/lib/settings/service';
+
 export const runtime = 'nodejs';
 
 interface AchievementCondition {
@@ -35,6 +37,8 @@ export async function PATCH(req: Request, { params }: { params: { id: string; ex
     return NextResponse.json({ workoutCompleted: false });
   }
 
+  const timezone = await getUserTimezone(sessionUser.id);
+
   // Every exercise is now done — run the full completion transaction.
   const result = await prisma.$transaction(async (tx) => {
     const durationMin = Math.round(session.activeSeconds / 60);
@@ -50,7 +54,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string; ex
       where: { userId: sessionUser.id, completedAt: { not: null }, id: { not: params.id } },
       orderBy: { completedAt: 'desc' },
     });
-    const { streakDays, bestStreak } = applyStreakRule(profile, previousLog?.completedAt ?? null, now);
+    const { streakDays, bestStreak } = applyStreakRule(profile, previousLog?.completedAt ?? null, now, timezone);
     const newXp = profile.xp + xpEarned;
     const newLevel = calculateLevelFromXP(newXp);
 
