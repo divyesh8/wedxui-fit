@@ -6,11 +6,13 @@ import { motion } from 'framer-motion';
 import { Apple, Flame, Beef, Wheat, Droplet, Clock, Pill, Leaf, Brain, Sparkles } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { renderAll } from '@/lib/ai/explain';
+import { useExplainOptions } from '@/hooks/use-explain-options';
 import type { AiNutritionPlan } from '@/lib/ai/types';
 
 export default function DietPage() {
   const [loading, setLoading] = useState(true);
   const [plan, setPlan] = useState<AiNutritionPlan | null>(null);
+  const explainOptions = useExplainOptions();
 
   useEffect(() => {
     fetch('/api/ai/plan')
@@ -158,7 +160,7 @@ export default function DietPage() {
           <CardHeader className="pb-3"><CardTitle className="text-base flex items-center gap-2"><Brain className="w-4 h-4 text-wed-purple" /> How this plan was built</CardTitle></CardHeader>
           <CardContent>
             <ul className="space-y-1.5">
-              {renderAll(plan.reasoning).map((line, i) => (
+              {renderAll(plan.reasoning, explainOptions).map((line, i) => (
                 <li key={i} className="text-xs text-wed-gray-400 leading-relaxed flex gap-2">
                   <Sparkles className="w-3 h-3 text-wed-purple flex-shrink-0 mt-0.5" /> {line}
                 </li>

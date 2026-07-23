@@ -1,7 +1,9 @@
 'use client';
 
 import { Check, Minus, Plus } from 'lucide-react';
-import { passwordStrength } from '@/lib/validations/settings';
+// Import from the zod-free constants module — pulling this from
+// validations/settings would drag all of zod into the client bundle.
+import { passwordStrength } from '@/lib/settings/constants';
 
 /**
  * Settings control primitives.

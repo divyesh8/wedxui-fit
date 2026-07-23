@@ -90,32 +90,7 @@ export async function logActivity(
   }
 }
 
-/** 0–100 based on real account state, not vibes. */
-export function securityScore(input: {
-  twoFactorEnabled: boolean;
-  recoveryCodeCount: number;
-  activeDevices: number;
-  lastPasswordChange: Date | null;
-}): { score: number; label: 'Weak' | 'Medium' | 'Strong'; tips: string[] } {
-  let score = 40; // baseline: bcrypt-hashed password + server-side sessions
-  const tips: string[] = [];
-
-  if (input.twoFactorEnabled) score += 35;
-  else tips.push('Enable two-factor authentication — the single biggest win.');
-
-  if (input.recoveryCodeCount > 0) score += 10;
-  else if (input.twoFactorEnabled) tips.push('Generate recovery codes so you cannot be locked out.');
-
-  if (input.activeDevices <= 3) score += 10;
-  else tips.push(`${input.activeDevices} devices are signed in — revoke any you don't recognise.`);
-
-  const ninetyDays = 90 * 24 * 60 * 60 * 1000;
-  if (input.lastPasswordChange && Date.now() - input.lastPasswordChange.getTime() < ninetyDays) score += 5;
-
-  const clamped = Math.max(0, Math.min(100, score));
-  return {
-    score: clamped,
-    label: clamped >= 80 ? 'Strong' : clamped >= 55 ? 'Medium' : 'Weak',
-    tips,
-  };
-}
+// securityScore moved to ./constants (crypto-free) so the client security card
+// can import it without pulling node crypto + bcryptjs into the browser bundle.
+// Re-exported here for server callers that already import from this module.
+export { securityScore, type SecurityScore } from './constants';

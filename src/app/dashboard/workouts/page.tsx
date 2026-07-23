@@ -12,6 +12,7 @@ import { useUIStore } from '@/store';
 import type { WorkoutPlan } from '@/types';
 import type { AiPlan } from '@/lib/ai/types';
 import { renderAll } from '@/lib/ai/explain';
+import { useExplainOptions } from '@/hooks/use-explain-options';
 import { Brain } from 'lucide-react';
 import { exercises as exerciseLibrary } from '@/data/exercises';
 import { Confetti } from '@/components/ui/confetti';
@@ -85,6 +86,7 @@ export default function WorkoutsPage() {
   };
 
   const [workoutSettings, setWorkoutSettings] = useState<{ restTimerSec: number; autoStartRestTimer: boolean } | null>(null);
+  const explainOptions = useExplainOptions();
 
   useEffect(() => {
     loadToday();
@@ -304,7 +306,7 @@ export default function WorkoutsPage() {
                   <div className="mt-3 pt-3 border-t border-white/10">
                     <p className="text-xs font-semibold text-wed-purple mb-1.5 flex items-center gap-1"><Brain className="w-3.5 h-3.5" /> Why this program</p>
                     <ul className="space-y-1">
-                      {renderAll(aiPlan.reasoning).map((l, i) => (
+                      {renderAll(aiPlan.reasoning, explainOptions).map((l, i) => (
                         <li key={i} className="text-[11px] text-wed-gray-400 leading-relaxed">• {l}</li>
                       ))}
                     </ul>
@@ -332,7 +334,7 @@ export default function WorkoutsPage() {
                           <details>
                             <summary className="text-[10px] text-wed-purple cursor-pointer select-none hover:brightness-125">Why?</summary>
                             <ul className="mt-1 space-y-0.5">
-                              {renderAll(ex.reasoning).map((l, i) => (
+                              {renderAll(ex.reasoning, explainOptions).map((l, i) => (
                                 <li key={i} className="text-[10px] text-wed-gray-400 leading-relaxed">• {l}</li>
                               ))}
                             </ul>

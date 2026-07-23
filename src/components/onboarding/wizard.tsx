@@ -12,6 +12,7 @@ import { goalProfiles, experienceProfiles } from '@/data/knowledge/volume-landma
 import { foodHabits, proteinSources } from '@/data/knowledge/nutrition-knowledge';
 import { aiOnboardingSchema } from '@/lib/validations/ai-onboarding';
 import { renderAll } from '@/lib/ai/explain';
+import { useExplainOptions } from '@/hooks/use-explain-options';
 import type { AiOnboardingInput, AthleteProfile, AiPlan, AiNutritionPlan } from '@/lib/ai/types';
 import { PHYSIQUE_ART } from '@/components/onboarding/physique-art';
 import type { OnboardingStage } from '@/components/onboarding/hero-panel';
@@ -104,6 +105,7 @@ export function OnboardingWizard({ onStageChange }: { onStageChange?: (stage: On
   const [generating, setGenerating] = useState(false);
   const [result, setResult] = useState<AiResult | null>(null);
   const [loadingExisting, setLoadingExisting] = useState(true);
+  const explainOptions = useExplainOptions();
   const [regenerating, setRegenerating] = useState(false);
 
   useEffect(() => {
@@ -289,7 +291,7 @@ export function OnboardingWizard({ onStageChange }: { onStageChange?: (stage: On
               ))}
             </div>
           )}
-          <WhyDetails lines={renderAll(ap.reasoning)} label="How this was computed" />
+          <WhyDetails lines={renderAll(ap.reasoning, explainOptions)} label="How this was computed" />
         </motion.div>
 
         {/* Nutrition targets strip */}
@@ -312,7 +314,7 @@ export function OnboardingWizard({ onStageChange }: { onStageChange?: (stage: On
           <div className="glass rounded-2xl p-4">
             <h3 className="text-sm font-bold text-white mb-2">Why this split?</h3>
             <ul className="space-y-1">
-              {renderAll(aiPlan.reasoning).map((l, i) => <li key={i} className="text-xs text-wed-gray-400">• {l}</li>)}
+              {renderAll(aiPlan.reasoning, explainOptions).map((l, i) => <li key={i} className="text-xs text-wed-gray-400">• {l}</li>)}
             </ul>
             <div className="mt-2 pt-2 border-t border-white/5 space-y-1">
               {aiPlan.validations.map((v, i) => (
@@ -330,7 +332,7 @@ export function OnboardingWizard({ onStageChange }: { onStageChange?: (stage: On
                       <p className="text-sm font-semibold text-white">{ex.name}</p>
                       <p className="text-xs text-wed-gray-400">{ex.sets} × {ex.reps} · rest {ex.rest}</p>
                     </div>
-                    <WhyDetails lines={renderAll(ex.reasoning)} />
+                    <WhyDetails lines={renderAll(ex.reasoning, explainOptions)} />
                   </div>
                 ))}
               </div>
@@ -357,7 +359,7 @@ export function OnboardingWizard({ onStageChange }: { onStageChange?: (stage: On
             <p className="text-[11px] uppercase tracking-wide text-wed-gray-500 mb-1">Supplements</p>
             {np.supplements.map((s, i) => <p key={i} className="text-xs text-wed-gray-300 mb-1">• {s}</p>)}
           </div>
-          <WhyDetails lines={renderAll(np.reasoning)} label="How this was computed" />
+          <WhyDetails lines={renderAll(np.reasoning, explainOptions)} label="How this was computed" />
         </motion.div>
 
         {error && <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">{error}</p>}

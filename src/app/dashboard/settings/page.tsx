@@ -27,6 +27,8 @@ import {
 } from '@/components/settings/controls';
 import { SecuritySection } from '@/components/settings/security-section';
 import { applyAppearance } from '@/components/providers/appearance-provider';
+// Import from the zod-free constants module — pulling these from
+// validations/settings would drag all of zod into the client bundle.
 import {
   ACCENT_COLORS,
   BUDGET_TIERS,
@@ -35,7 +37,7 @@ import {
   DURATIONS,
   EQUIPMENT_VALUES,
   TRAINING_DAYS,
-} from '@/lib/validations/settings';
+} from '@/lib/settings/constants';
 
 type TabId = 'account' | 'workout' | 'diet' | 'ai' | 'notifications' | 'privacy' | 'appearance' | 'security';
 

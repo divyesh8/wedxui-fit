@@ -122,8 +122,19 @@ export async function POST(req: Request) {
   if (dSettings.budgetTier) {
     athleteProfile.budgetTier = dSettings.budgetTier as 'budget' | 'moderate' | 'premium';
   }
+  // An explicit diet choice in Settings outranks what the engine inferred from
+  // food habits — dietFlags drives protein-source and supplement filtering.
+  if (dSettings.dietType === 'VEGAN') {
+    athleteProfile.dietFlags = { vegan: true, vegetarian: true };
+  } else if (dSettings.dietType === 'VEGETARIAN') {
+    athleteProfile.dietFlags = { vegan: false, vegetarian: true };
+  }
   const aiPlan = { ...generateIntelligentPlan(athleteProfile), generatedAt: new Date().toISOString() };
   const aiNutritionPlan = generateNutritionPlan(input, athleteProfile);
+  // An explicit hydration goal replaces the engine's bodyweight-derived estimate.
+  if (dSettings.waterGoalMl) {
+    aiNutritionPlan.targets = { ...aiNutritionPlan.targets, waterMl: dSettings.waterGoalMl };
+  }
 
   // Persist AI columns + legacy-compat columns (existing dashboard/session
   // routes read goal/experience/equipment/etc. and must keep working).

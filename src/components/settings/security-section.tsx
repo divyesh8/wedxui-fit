@@ -23,7 +23,9 @@ import {
 import { useSettings } from '@/hooks/use-settings';
 import { useUIStore } from '@/store';
 import { PasswordMeter, SettingRow, SettingsSection, TextField } from '@/components/settings/controls';
-import { securityScore } from '@/lib/settings/security';
+// Crypto-free module — importing securityScore from ./security would pull node
+// crypto + bcryptjs into this client component's bundle.
+import { securityScore } from '@/lib/settings/constants';
 
 interface Device {
   id: string;
