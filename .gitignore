@@ -9,9 +9,10 @@ out/
 dist/
 build/
 
-# IDE/Editor configurations
+# IDE/Editor and agent tooling
 .idea/
 .vscode/
+.claude/
 *.suo
 *.ntvs*
 *.njsproj
