@@ -256,6 +256,58 @@ async function main() {
       body: JSON.stringify({ scope: 'progress' }),
     })).json();
     check('progress history cleared', hist.deleted.progress === 1, `${hist.deleted.progress} deleted`);
+
+    // ── 11. Cron purge matures a deletion (the job that makes deletion real) ──
+    console.log('\nGET /api/cron/purge-accounts');
+    // A separate throwaway user whose deletion request has already matured.
+    const doomed = await prisma.user.create({
+      data: {
+        username: `purge_${stamp}`.slice(0, 20),
+        email: `purge-e2e-${stamp}@example.test`,
+        name: 'Purge E2E',
+        password: await bcrypt.hash(`x-${stamp}`, 12),
+        emailVerified: new Date(),
+        deleteRequest: {
+          create: {
+            requestedAt: new Date(Date.now() - 31 * 86_400_000),
+            scheduledFor: new Date(Date.now() - 86_400_000), // matured yesterday
+          },
+        },
+      },
+    });
+    // A control user whose request has NOT matured — must survive the purge.
+    const safe = await prisma.user.create({
+      data: {
+        username: `safe_${stamp}`.slice(0, 20),
+        email: `safe-e2e-${stamp}@example.test`,
+        name: 'Safe E2E',
+        password: await bcrypt.hash(`y-${stamp}`, 12),
+        emailVerified: new Date(),
+        deleteRequest: {
+          create: {
+            requestedAt: new Date(),
+            scheduledFor: new Date(Date.now() + 29 * 86_400_000), // still in the grace window
+          },
+        },
+      },
+    });
+
+    const noAuth = await fetch(`${BASE}/api/cron/purge-accounts`);
+    check('cron rejects unauthenticated calls', noAuth.status === 401, `HTTP ${noAuth.status}`);
+
+    const cronRes = await fetch(`${BASE}/api/cron/purge-accounts`, {
+      headers: { Authorization: `Bearer ${process.env.CRON_SECRET}` },
+    });
+    const cron = await cronRes.json();
+    check('cron authorised with secret', cronRes.ok, `HTTP ${cronRes.status}`);
+    check('matured account purged',
+      (await prisma.user.findUnique({ where: { id: doomed.id } })) === null);
+    check('un-matured account survived',
+      (await prisma.user.findUnique({ where: { id: safe.id } })) !== null,
+      `purged ${cron.purged} of ${cron.due} due`);
+
+    // Clean up the control user (the doomed one is already gone).
+    await prisma.user.delete({ where: { id: safe.id } }).catch(() => {});
   } finally {
     // Cascade removes settings, sessions, activity, and deletion requests.
     await prisma.user.delete({ where: { id: user.id } }).catch(() => {});
